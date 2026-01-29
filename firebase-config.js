@@ -1,9 +1,4 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
-
-// Your web app's Firebase configuration
+// Firebase configuration and initialization for CDN
 const firebaseConfig = {
   apiKey: "AIzaSyD7tjIkgpl40qXGCN2tze9ToR8HAsjD_1g",
   authDomain: "aduandewanmakankvpm.firebaseapp.com",
@@ -15,6 +10,6 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app); // Get Firestore instance
+const app = firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics(app);
+const db = firebase.firestore(app);  // For Firestore
