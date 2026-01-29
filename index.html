@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sistem Aduan Dewan Makan - Portal Korporat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- jsPDF for PDF export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+  :root {
+    --brand:#0c6fa0;
+    --brand-strong:#0d84b8;
+    --action:#14552c;
+    --action-strong:#0f4524;
+    --ink:#0f2438;
+    --muted:#6e7a89;
+    --surface:#ffffff;
+    --surface-2:#f6f9fb;
+    --border:#d9e1eb;
+    --shadow:0 12px 26px rgba(15,35,55,0.08);
+    --success:#2d9d78;
+    --warn:#f5a524;
+    --danger:#d14343;
+  }
+  * { box-sizing:border-box; }
+  body {
+    font-family:'Manrope','Segoe UI',Tahoma,sans-serif;
+    margin:0; padding:0;
+    color:var(--ink);
+    background:linear-gradient(140deg, #f7fbff 0%, #ecf3f9 45%, #f7fbff 100%);
+    min-height:100vh;
+    position:relative;
+  }
+  body::before {
+    content:"";
+    position:fixed; inset:0; z-index:-2;
+    background:radial-gradient(circle at 18% 22%, rgba(13,132,184,0.09), transparent 28%),
+               radial-gradient(circle at 78% 12%, rgba(12,111,160,0.05), transparent 26%);
+    opacity:1;
+  }
+  body::after{
+    content:""; position:fixed; inset:0;
+    background:linear-gradient(135deg, rgba(12,47,82,0.06), rgba(255,255,255,0.2));
+    z-index:-1;
+  }
+  .container { max-width:1220px; margin:0 auto; padding:28px 16px 42px; position:relative; z-index:1; }
+  h1,h2,h3,h4 { margin:0 0 12px 0; color:var(--ink); }
+  p { margin:0 0 10px 0; }
+  .eyebrow { text-transform:uppercase; letter-spacing:0.08em; font-weight:700; font-size:12px; color:var(--brand-strong); margin-bottom:8px; }
+  .card {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:20px 22px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+    animation:fadeUp 0.35s ease;
+  }
+  .card::after { display:none; }
+  .card > * { position:relative; z-index:1; }
+  .hero-card { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:26px 28px; background:var(--surface); border:1px solid var(--border); border-radius:18px; }
+  .hero-meta { display:flex; gap:14px; flex-wrap:wrap; }
+  .metric { padding:12px 14px; border:1px solid var(--border); border-radius:12px; background:var(--surface-2); min-width:170px; box-shadow:0 10px 22px rgba(12,26,43,0.08); }
+  .metric .label { display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:4px; }
+  .badge-live { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:rgba(13,132,184,0.12); color:var(--brand-strong); font-weight:800; letter-spacing:0.06em; border:1px solid rgba(13,132,184,0.3); }
+  .badge-live::before { content:""; width:10px; height:10px; border-radius:50%; background:var(--success); box-shadow:0 0 0 8px rgba(45,157,120,0.15); animation:pulse 1.8s infinite; }
+  .hero-progress { margin-top:12px; }
+  .progress-track { width:260px; max-width:100%; height:10px; border-radius:999px; background:#e6edf7; overflow:hidden; border:1px solid var(--border); }
+  .progress-fill { height:100%; background:linear-gradient(135deg, var(--brand), var(--brand-strong)); width:0%; transition:width 0.35s ease; }
+  nav.top-nav { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 18px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); }
+  nav .brand { font-weight:800; color:var(--brand); font-size:16px; margin-right:8px; letter-spacing:0.02em; }
+  nav button { background:var(--surface); color:var(--ink); border:1px solid var(--border); padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:600; transition:all 0.18s ease; }
+  nav button:hover { color:var(--brand-strong); border-color:var(--brand-strong); box-shadow:0 6px 16px rgba(15,95,166,0.12); }
+  nav button.active { background:var(--action); color:#fff; border-color:var(--action); box-shadow:0 10px 22px rgba(24,99,50,0.25); }
+  button { font-family:inherit; }
+  .btn-primary { background:var(--action); color:#f7fff0; border:1px solid var(--action); box-shadow:0 8px 18px rgba(20,85,44,0.28); border-radius:12px; font-weight:700; text-shadow:0 1px 2px rgba(0,0,0,0.4); }
+  .btn-primary:hover { background:var(--action-strong); border-color:var(--action-strong); transform:translateY(-1px); }
+  .btn-ghost { background:#eef4f9; color:var(--ink); border:1px solid var(--border); border-radius:12px; }
+  .btn-ghost:hover { border-color:var(--brand-strong); color:var(--brand-strong); }
+  button.delete { background:var(--danger); border-color:var(--danger); color:#fff; border-radius:12px; }
+  button.small { padding:6px 10px; font-size:13px; border-radius:8px; margin-left:6px; }
+  label { display:block; margin-bottom:10px; font-size:14px; color:var(--muted); }
+  input, select, textarea {
+    width:100%; padding:10px 12px; margin-top:6px;
+    border:1px solid var(--border); border-radius:10px; box-sizing:border-box;
+    background:var(--surface-2); color:var(--ink);
+  }
+  input:focus, select:focus, textarea:focus { outline:2px solid rgba(15,102,208,0.18); border-color:var(--brand-strong); }
+  textarea { resize:vertical; }
+  .small { color:var(--muted); font-size:13px; }
+  .home-grid { display:flex; gap:14px; flex-wrap:wrap; }
+  .home-action { flex:1 1 260px; padding:18px; border-radius:14px; background:var(--surface); border:1px solid var(--border); box-shadow:0 10px 24px rgba(15,35,55,0.08); }
+  .chart-row { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; margin-top:12px; }
+  .chart-card { background:#fff; padding:14px; border-radius:14px; box-shadow:0 10px 24px rgba(15,35,55,0.08); border:1px solid var(--border); flex:1 1 320px; min-width:300px; }
+  .chart-card canvas { width:100% !important; height:300px !important; display:block; }
+  table { border-collapse: collapse; width: 100%; background:#fff; border:1px solid var(--border); box-shadow:var(--shadow); border-radius:12px; overflow:hidden; }
+  table th, table td { border: 1px solid var(--border); padding:10px; text-align:left; vertical-align:middle; font-size:14px; }
+  table th { background:#f5f7fb; color:var(--muted); font-weight:700; }
+  ul { list-style:none; padding-left:0; }
+  li { margin-bottom:8px; display:flex; align-items:flex-start; gap:8px; }
+  li::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--brand-strong); margin-top:7px; display:inline-block; }
+  .complaint { padding:12px; border-radius:12px; border:1px solid var(--border); margin-bottom:10px; background:#fff; box-shadow:0 10px 24px rgba(12,26,43,0.05); }
+  .status-pill { display:inline-block; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; border:1px solid var(--border); background:var(--surface-2); }
+  .status-pill.Baru { color:var(--brand-strong); background:rgba(15,102,208,0.08); border-color:rgba(15,102,208,0.2); }
+  .status-pill.DalamProses { color:var(--warn); background:rgba(245,165,36,0.12); border-color:rgba(245,165,36,0.35); }
+  .status-pill.Selesai { color:var(--success); background:rgba(45,157,120,0.12); border-color:rgba(45,157,120,0.35); }
+  .admin-analytics { margin-top:16px; display:none; }
+  .avg-box { padding:12px 14px; border-radius:10px; background:#eef3fb; display:inline-block; margin-bottom:12px; border:1px solid var(--border); }
+  .menu-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:12px; }
+  .menu-day { background:#fff; border:1px solid var(--border); border-radius:12px; padding:12px 14px; box-shadow:0 8px 20px rgba(12,26,43,0.06); }
+  .week-grid { display:grid; gap:12px; }
+  .week-card { background:#fff; border:1px solid var(--border); border-radius:12px; padding:10px 12px; box-shadow:0 8px 18px rgba(12,26,43,0.06); }
+  .week-card summary { cursor:pointer; font-weight:800; color:var(--brand); list-style:none; }
+  .week-card summary::-webkit-details-marker { display:none; }
+  .week-days { margin-top:10px; display:grid; gap:10px; }
+  .week-day { background:#f9fbff; border:1px solid var(--border); border-radius:10px; padding:10px; }
+  .week-day h4 { margin:0 0 8px; font-size:14px; }
+  .meal-columns { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; margin-top:10px; }
+  .meal-block { background:#f8fbff; border:1px solid var(--border); border-radius:10px; padding:10px; box-shadow:0 8px 16px rgba(12,26,43,0.06); }
+  .meal-title { font-weight:800; font-size:13px; letter-spacing:0.04em; text-transform:uppercase; color:var(--brand); margin-bottom:6px; }
+  .menu-admin { margin:12px 0; display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; }
+  .menu-admin .full { grid-column:1 / -1; }
+  .menu-admin .inline-btns { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+  .admin-highlight { color:#0f66d0; font-weight:800; }
+  .admin-highlight-btn { font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,0.35); }
+  .filter-row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .stat-chip { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fff; box-shadow:0 8px 18px rgba(12,26,43,0.06); font-size:12px; font-weight:700; color:var(--muted); }
+  .chip-action { display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:10px; background:#eef3fb; border:1px dashed var(--border); font-size:12px; cursor:pointer; }
+  .segmented { display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:var(--surface); margin-bottom:12px; }
+  .segmented label { padding:8px 12px; cursor:pointer; font-weight:600; color:var(--muted); }
+  .segmented input { display:none; }
+  .segmented label.active { background:var(--brand-strong); color:#fff; }
+  .legend { display:flex; gap:10px; flex-wrap:wrap; margin:8px 0 12px; }
+  .legend .chip { padding:6px 10px; border-radius:999px; border:1px solid var(--border); background:#fff; box-shadow:0 8px 18px rgba(12,26,43,0.06); font-size:12px; font-weight:600; color:var(--muted); display:flex; align-items:center; gap:6px; }
+  .chip .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot.baru { background:var(--brand-strong); }
+  .dot.proses { background:var(--warn); }
+  .dot.selesai { background:var(--success); }
+  .status-row { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .status-card { flex:1 1 180px; min-width:160px; background:linear-gradient(150deg, rgba(13,132,184,0.08), #fff); border:1px solid var(--border); border-radius:12px; padding:12px; box-shadow:0 10px 24px rgba(15,35,55,0.08); }
+  .status-card .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:0.06em; }
+  .status-card .value { font-size:22px; font-weight:800; color:var(--ink); }
+  .status-progress { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:10px; margin-bottom:12px; }
+  .progress-block { background:#fff; border:1px solid var(--border); border-radius:10px; padding:10px 12px; box-shadow:0 8px 16px rgba(12,26,43,0.05); }
+  .progress-label { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .progress-rail { height:10px; border-radius:999px; background:#eef3fb; overflow:hidden; border:1px solid var(--border); }
+  .progress-bar { height:100%; width:0%; transition:width 0.35s ease; }
+  .progress-bar.baru { background:linear-gradient(135deg, var(--brand), var(--brand-strong)); }
+  .progress-bar.proses { background:linear-gradient(135deg, #f1b44c, #f5a524); }
+  .progress-bar.selesai { background:linear-gradient(135deg, #2d9d78, #38c89d); }
+  .menu-day:hover { transform:translateY(-2px); box-shadow:0 12px 26px rgba(12,26,43,0.12); transition:all 0.2s ease; }
+  tr:hover td { background:#f8fbff; }
+  .flex-col { display:flex; flex-direction:column; gap:8px; }
+  .image-modal { display:none; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; padding:20px; }
+  .image-modal img { max-width:90vw; max-height:90vh; border-radius:12px; box-shadow:0 14px 36px rgba(0,0,0,0.35); background:#fff; }
+  .image-modal .close-btn { position:absolute; top:16px; right:16px; background:#fff; border:1px solid var(--border); border-radius:50%; width:40px; height:40px; font-size:18px; cursor:pointer; box-shadow:0 8px 18px rgba(0,0,0,0.2); }
+  @keyframes pulse { 0% { transform:scale(0.9); opacity:0.8; } 50% { transform:scale(1); opacity:1; } 100% { transform:scale(0.9); opacity:0.8; } }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@media (max-width:720px){ .chart-row{flex-direction:column;} .home-grid{flex-direction:column;} .hero-card { flex-direction:column; align-items:flex-start; } nav.top-nav { flex-direction:column; align-items:flex-start; } }
+</style>
+</head>
+<body>
+  <div class="container">
+    <nav class="top-nav">
+      <div class="brand">Sistem Aduan Dewan Makan</div>
+      <div class="nav-buttons">
+        <button type="button" data-target="home" onclick="showSection('home')">Halaman Utama</button>
+        <button type="button" data-target="pelajar" onclick="showSection('pelajar')">Borang Pelajar</button>
+        <button type="button" data-target="senarai" onclick="showSection('senarai')">Senarai Aduan</button>
+        <button type="button" data-target="admin" onclick="showSection('admin')">Panel Admin</button>
+        <button type="button" data-target="menu" onclick="showSection('menu')">Menu Makan Asrama</button>
+      </div>
+    </nav>
+
+    <header class="hero-card card">
+      <div>
+        <div class="eyebrow">Portal Korporat</div>
+        <h1>Panel Aduan & Pemantauan</h1>
+        <div class="badge-live">LIVE</div>
+        <p class="small">Automasi aduan pelajar, status tindakan, dan analitik rating dalam satu paparan.</p>
+        <div class="hero-progress">
+          <div class="small" style="margin-bottom:4px;">Purata Rating</div>
+          <div class="progress-track"><div class="progress-fill" id="avgBarFill"></div></div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <div class="metric">
+          <span class="label">Purata Rating</span>
+          <strong id="headerAvg">-</strong>
+        </div>
+        <div class="metric">
+          <span class="label">Jumlah Aduan</span>
+          <strong id="headerTotal">0</strong>
+        </div>
+        <div class="metric">
+          <span class="label">Peranan Admin</span>
+          <strong id="headerRole">-</strong>
+        </div>
+      </div>
+    </header>
+
+    <section id="home" class="card">
+      <h2>Halaman Utama | Sila Login</h2>
+      <div class="home-grid">
+        <div class="home-action">
+          <h3>Login Pelajar / Admin</h3>
+          <p class="small">Pilih peranan, masukkan IC/username & kata laluan.</p>
+          <div class="segmented" id="roleToggle">
+            <label data-role="pelajar" class="active"><input type="radio" name="login_role" value="pelajar" checked> Pelajar</label>
+            <label data-role="admin"><input type="radio" name="login_role" value="admin"> Admin</label>
+          </div>
+          <form id="unifiedLogin">
+            <label id="identifierLabel">No Kad Pengenalan
+              <input type="text" id="login_identifier" required>
+            </label>
+            <label id="passwordLabel">Kata Laluan
+              <input type="password" id="login_password" required>
+            </label>
+            <button type="submit" class="btn-primary">Log Masuk</button>
+          </form>
+          <div id="loginMsg" class="small" style="margin-top:8px"></div>
+          <div class="small">Pelajar: kata laluan <strong>12345</strong>. Admin/Jaksa/Ketua Dorm/Warden/Pengurusan: username (cth: <strong>admin</strong>/<strong>jaksa</strong>/<strong>ketua dorm</strong>/<strong>warden</strong>/<strong>pihak pengurusan asrama</strong>) & kata laluan <strong>12345</strong>.</div>
+        </div>
+
+        <div class="home-action">
+          <h3>Menu Makan Asrama</h3>
+          <p class="small">Lihat jadual menu.</p>
+          <button type="button" onclick="showSection('menu')" class="btn-ghost">Lihat Menu</button>
+        </div>
+
+        <div class="home-action" id="firstTimeCard">
+          <h3>Daftar Pelajar Kali Pertama</h3>
+          <p class="small">Daftarkan pelajar baharu supaya boleh login dengan IC & kata laluan.</p>
+          <form id="firstTimeForm">
+            <label>Nama Pelajar
+              <input type="text" id="firstTime_name" placeholder="Nama penuh" required>
+            </label>
+            <label>No Kad Pengenalan
+              <input type="text" id="firstTime_ic" required>
+            </label>
+            <label>Dorm
+              <input type="text" id="firstTime_dorm">
+            </label>
+            <label>Kata Laluan
+              <input type="text" id="firstTime_pass" value="12345" readonly>
+            </label>
+            <button type="submit" class="btn-primary">Simpan Pendaftaran</button>
+          </form>
+          <div id="firstTimeMsg" class="small" style="margin-top:6px;"></div>
+          <div id="firstTimeList" class="small" style="margin-top:10px;">Tiada pendaftaran baharu.</div>
+        </div>
+
+      </div>
+    </section>
+
+    <section id="pelajar" class="card" style="display:none;">
+      <h2>Hantar Aduan (Pelajar)</h2>
+      <p class="small">Anda mesti log masuk sebagai pelajar dahulu.</p>
+
+      <form id="complaintForm">
+        <label>Nama
+          <input type="text" id="name" placeholder="Nama akan terisi selepas login" disabled>
+        </label>
+        <label>No Kad Pengenalan (terbaca sahaja)
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="ic_display" disabled>
+            <button type="button" class="btn-ghost small" onclick="copyIC()">Salin IC</button>
+          </div>
+        </label>
+        <label>Dorm
+          <input type="text" id="dorm" placeholder="Contoh: D1">
+        </label>
+        <label>Waktu Makan
+          <select id="meal_type" required>
+            <option value="Sarapan">Sarapan</option>
+            <option value="Makan Tengahari">Makan Tengahari</option>
+            <option value="Kudapan Petang">Kudapan Petang</option>
+            <option value="Makan Malam">Makan Malam</option>
+            <option value="Kudapan Malam">Kudapan Malam</option>
+          </select>
+        </label>
+        <label>Rating (1-5)
+          <input type="number" id="rating" min="1" max="5" value="3" required>
+        </label>
+        <div id="ratingDesc" class="small" style="margin-top:-4px;"></div>
+        <label>Aduan / Cadangan
+          <textarea id="message" rows="3"></textarea>
+        </label>
+        <label>Upload Gambar Aduan (optional)
+          <input type="file" id="image" accept="image/*">
+        </label>
+        <button type="submit" class="btn-primary">Hantar Aduan</button>
+        <button type="button" onclick="studentLogout()" class="btn-ghost" style="margin-left:8px;">Logout Pelajar</button>
+        <div id="statusMsg" class="small" style="margin-top:8px"></div>
+      </form>
+    </section>
+
+    <section id="senarai" class="card" style="display:none;">
+      <h2>Senarai Aduan (Pelajar)</h2>
+      <p class="small">Anda mesti log masuk sebagai pelajar dahulu.</p>
+
+      <div class="card" style="padding:12px 14px; margin-bottom:14px;">
+        <div class="eyebrow">Penapis Aduan Pelajar</div>
+        <div class="filter-row">
+          <input type="text" id="studentSearch" placeholder="Cari nama / dorm / aduan" style="max-width:220px;">
+          <select id="studentStatusFilter" style="max-width:160px;">
+            <option value="ALL">Status: Semua</option>
+            <option value="Baru">Baru</option>
+            <option value="DalamProses">DalamProses</option>
+            <option value="Selesai">Selesai</option>
+          </select>
+          <select id="studentRatingFilter" style="max-width:160px;">
+            <option value="ALL">Rating: Semua</option>
+            <option value="4plus">Rating 4 & 5</option>
+            <option value="low">Rating 1 & 2</option>
+            <option value="exact5">Rating 5 sahaja</option>
+          </select>
+          <select id="studentSort" style="max-width:180px;">
+            <option value="latest">Terbaru</option>
+            <option value="oldest">Terdahulu</option>
+            <option value="high">Rating tertinggi</option>
+            <option value="low">Rating terendah</option>
+          </select>
+          <select id="studentMealFilter" style="max-width:170px;">
+            <option value="ALL">Waktu: Semua</option>
+            <option value="Sarapan">Sarapan</option>
+            <option value="Makan Tengahari">Makan Tengahari</option>
+            <option value="Kudapan Petang">Kudapan Petang</option>
+            <option value="Makan Malam">Makan Malam</option>
+            <option value="Kudapan Malam">Kudapan Malam</option>
+          </select>
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <input type="checkbox" id="studentMineOnly"> Aduan saya sahaja
+          </label>
+          <button type="button" class="btn-ghost small" onclick="resetStudentFilters()">Reset</button>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;" id="studentStats">
+          <span class="stat-chip">Jumlah: <span id="studentTotal">0</span></span>
+          <span class="stat-chip"><span class="dot baru"></span> Baru: <span id="studentCountBaru">0</span></span>
+          <span class="stat-chip"><span class="dot proses"></span> Proses: <span id="studentCountProses">0</span></span>
+          <span class="stat-chip"><span class="dot selesai"></span> Selesai: <span id="studentCountSelesai">0</span></span>
+        </div>
+      </div>
+
+      <h3>Senarai Aduan Terkini</h3>
+      <div id="complaintsList">Tiada aduan lagi.</div>
+    </section>
+
+    <section id="admin" class="card" style="display:none;">
+      <h2>Panel Admin</h2>
+
+      <div id="adminControls" style="margin-bottom:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" onclick="showSection('home')" class="btn-ghost">Kembali ke Halaman Utama</button>
+        <button type="button" onclick="adminLogout()" class="btn-ghost">Logout Admin</button>
+        <select id="adminActionSelect" class="btn-ghost" onchange="handleAdminAction(this.value)" style="min-width:220px; padding:10px 12px; border-radius:12px;">
+          <option value="">Pilih tindakan pantas</option>
+          <option value="export_csv">Eksport CSV</option>
+          <option value="export_json">Eksport JSON</option>
+          <option value="export_pdf">Eksport PDF</option>
+          <option value="seed_demo">Tambah 30 Hari Data Demo</option>
+          <option value="bulk_process">Tandai semua Baru → DalamProses</option>
+          <option value="bulk_delete">Padam semua Selesai</option>
+        </select>
+      </div>
+
+      <div class="card" style="padding:12px 14px; margin-bottom:14px;">
+        <div class="eyebrow admin-highlight">Import Senarai Pelajar (Nama, MyKad, Dorm)</div>
+        <p class="small">Tampal data berbaris: <code>Nama;MyKad;Dorm</code>. Contoh: <code>ALI BIN ABU;050825-03-0663;2A1</code>. Dorm akan terisi automatik bila pelajar login.</p>
+        <div class="flex-col">
+          <textarea id="studentImport" rows="4" placeholder="Nama;MyKad;Dorm"></textarea>
+          <button type="button" class="btn-primary small" onclick="importStudents()">Import Pelajar</button>
+          <div id="studentImportMsg" class="small"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:12px 14px; margin-bottom:14px;">
+        <div class="eyebrow admin-highlight">Senarai Pelajar Daftar Kali Pertama</div>
+        <div class="filter-row" style="margin-bottom:8px;">
+          <input type="text" id="firstTimeAdminSearch" placeholder="Cari nama / IC" style="max-width:220px;">
+        </div>
+        <div id="firstTimeAdminList" class="small">Tiada pendaftaran baharu.</div>
+        <div class="filter-row" style="margin-top:10px;">
+          <button type="button" class="btn-ghost small" onclick="clearCustomStudents()">Clear All</button>
+        </div>
+      </div>
+
+      <div class="status-row" id="statusCounts">
+        <div class="status-card">
+          <div class="label">Baru</div>
+          <div class="value" id="countBaru">0</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Dalam Proses</div>
+          <div class="value" id="countDalamProses">0</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Selesai</div>
+          <div class="value" id="countSelesai">0</div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="chip"><span class="dot baru"></span>Aduan Baru</span>
+        <span class="chip"><span class="dot proses"></span>Tindakan Sedang Diproses</span>
+        <span class="chip"><span class="dot selesai"></span>Selesai & Boleh Ditutup</span>
+      </div>
+
+      <div class="card" style="padding:12px 14px; margin-bottom:14px;">
+        <div class="eyebrow">Penapis Pantas</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <input type="text" id="adminSearch" placeholder="Cari nama / IC / dorm / aduan" style="max-width:220px;">
+          <select id="adminStatusFilter" style="max-width:160px;">
+            <option value="ALL">Status: Semua</option>
+            <option value="Baru">Baru</option>
+            <option value="DalamProses">DalamProses</option>
+            <option value="Selesai">Selesai</option>
+          </select>
+          <select id="adminRatingFilter" style="max-width:160px;">
+            <option value="ALL">Rating: Semua</option>
+            <option value="4plus">Rating 4 & 5</option>
+            <option value="low">Rating 1 & 2</option>
+            <option value="exact5">Rating 5 sahaja</option>
+          </select>
+          <select id="adminSort" style="max-width:180px;">
+            <option value="latest">Terbaru</option>
+            <option value="oldest">Terdahulu</option>
+            <option value="high">Rating tertinggi</option>
+            <option value="low">Rating terendah</option>
+          </select>
+          <select id="adminMealFilter" style="max-width:170px;">
+            <option value="ALL">Waktu: Semua</option>
+            <option value="Sarapan">Sarapan</option>
+            <option value="Makan Tengahari">Makan Tengahari</option>
+            <option value="Kudapan Petang">Kudapan Petang</option>
+            <option value="Makan Malam">Makan Malam</option>
+            <option value="Kudapan Malam">Kudapan Malam</option>
+          </select>
+          <button type="button" class="btn-ghost small" onclick="resetAdminFilters()">Reset</button>
+        </div>
+      </div>
+
+      <div class="status-progress">
+        <div class="progress-block">
+          <div class="progress-label"><span>Baru</span><span id="percBaru">0%</span></div>
+          <div class="progress-rail"><div class="progress-bar baru" id="progressBaru"></div></div>
+        </div>
+        <div class="progress-block">
+          <div class="progress-label"><span>Dalam Proses</span><span id="percDalamProses">0%</span></div>
+          <div class="progress-rail"><div class="progress-bar proses" id="progressDalamProses"></div></div>
+        </div>
+        <div class="progress-block">
+          <div class="progress-label"><span>Selesai</span><span id="percSelesai">0%</span></div>
+          <div class="progress-rail"><div class="progress-bar selesai" id="progressSelesai"></div></div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:12px 14px; margin-bottom:14px;">
+        <div class="eyebrow">Urus Menu Makanan & Minuman</div>
+        <div class="menu-admin">
+          <div>
+            <label>Minggu
+              <select id="weeklyMenuWeek">
+                <option value="1">Minggu 1</option>
+                <option value="2">Minggu 2</option>
+                <option value="3">Minggu 3</option>
+                <option value="4">Minggu 4</option>
+                <option value="5">Minggu 5</option>
+                <option value="6">Minggu 6</option>
+                <option value="7">Minggu 7</option>
+                <option value="8">Minggu 8</option>
+                <option value="9">Minggu 9</option>
+                <option value="10">Minggu 10</option>
+                <option value="11">Minggu 11</option>
+                <option value="12">Minggu 12</option>
+                <option value="13">Minggu 13</option>
+                <option value="14">Minggu 14</option>
+                <option value="15">Minggu 15</option>
+                <option value="16">Minggu 16</option>
+              </select>
+            </label>
+          </div>
+          <div>
+            <label>Hari
+              <select id="weeklyMenuDay">
+                <option value="Ahad">Ahad</option>
+                <option value="Isnin">Isnin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Khamis">Khamis</option>
+                <option value="Jumaat">Jumaat</option>
+                <option value="Sabtu">Sabtu</option>
+              </select>
+            </label>
+          </div>
+          <div>
+            <label>Waktu
+              <select id="weeklyMenuSlot">
+                <option value="Sarapan">Sarapan</option>
+                <option value="Tengahari">Makan Tengahari</option>
+                <option value="Petang">Kudapan Petang</option>
+                <option value="Malam">Makan Malam</option>
+                <option value="MinumMalam">Kudapan Malam</option>
+              </select>
+            </label>
+          </div>
+          <div class="full">
+            <label>Menu (makanan/minuman)
+              <input type="text" id="weeklyMenuItemName" placeholder="Contoh: Nasi Lemak + Teh O">
+            </label>
+          </div>
+          <div class="inline-btns full">
+            <button type="button" class="btn-primary small admin-highlight-btn" onclick="addWeeklyMenuItem()">Tambah Menu</button>
+            <button type="button" class="btn-ghost small" onclick="resetWeeklyMenuForm()">Reset</button>
+            <span id="weeklyMenuMsg" class="small"></span>
+          </div>
+        </div>
+        <div id="weeklyMenuAdminList" class="small" style="margin-top:8px;"></div>
+      </div>
+
+      <div id="adminList">Tiada aduan.</div>
+
+      <div class="admin-analytics">
+        <h3>Analisis Rating</h3>
+        <div class="avg-box small">
+          Purata Rating: <span id="avgRating">-</span> / 5
+        </div>
+
+        <div class="chart-row">
+          <div class="chart-card">
+            <h4>Peratusan Mengikut Rating (Pai)</h4>
+            <canvas id="ratingPie" aria-label="chart-pie" role="img"></canvas>
+          </div>
+      <div class="chart-card">
+        <h4>Jumlah Aduan Mengikut Rating (Pai)</h4>
+        <canvas id="ratingBar" aria-label="chart-pie" role="img"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="imageModal" class="image-modal" onclick="closeImageViewer(event)">
+  <button class="close-btn" aria-label="Tutup" onclick="closeImageViewer(event)">×</button>
+  <img id="modalImage" alt="Lampiran aduan">
+</div>
+
+    <section id="menu" class="card" style="display:none;">
+      <h2>Menu Makan Asrama</h2>
+      <div class="card" style="margin-top:16px;">
+        <div class="eyebrow">Jadual Menu 16 Minggu</div>
+        <div id="weeklyMenuList"></div>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+// Storages with mobile/private-mode fallback
+function createStore(type){
+  try{
+    const store = type === 'local' ? window.localStorage : window.sessionStorage;
+    const test = '__test_'+type;
+    store.setItem(test,'1'); store.removeItem(test);
+    return store;
+  }catch(e){
+    const mem = {};
+    return {
+      getItem:k=> Object.prototype.hasOwnProperty.call(mem,k) ? mem[k] : null,
+      setItem:(k,v)=>{ mem[k]=String(v); },
+      removeItem:k=>{ delete mem[k]; }
+    };
+  }
+}
+const LS = createStore('local');
+const SS = createStore('session');
+
+/* -------------------------
+   Student DB (IC => Name)
+   ------------------------- */
+const studentDB = {
+  "060716030577": "ABDUL FATTAH BIN IZAIMAN @ MOHD IZAIMAN",
+  "091222101269": "AADIM AHMADI BIN MUHAMAD SHAKIR",
+  "061128030313": "ABDUL BASIT BIN PAUZI",
+  "090326030413": "ABDUL HARRAZ DANISH BIN MUHAMAD RAIHAN",
+  "060302030323": "ABDUL QAIDIR MUAZZAM BIN MUSTAFA",
+  "081228030773": "ABDULLAH HAKIM BIN ANUAR",
+  "090718010307": "ADAM ALHAFIZ BIN ASOMUDIN",
+  "060304031055": "ADAM IMAN BIN AIZUL HAIKAL",
+  "080125120173": "ADAM JAZIMIN BIN MOHAMED NIZAM",
+  "050923030714": "ADWA' DAMIA QISTINA BINTI ARMEE SHAHRULMIZAN",
+  "091111160135": "AHMAD ADAM BIN MOHD AZAM",
+  "080317030631": "AHMAD AFIF BIN AH AFANDI",
+  "081122030433": "AHMAD AFIQ HAFIZUDDIN BIN ROSMAN",
+  "071024030537": "AHMAD AFNAN ZHAHIRIN BIN MOHD ZAMRI",
+  "080320030579": "AHMAD ALIFF DANIEL BIN AHMAD SAYOUTEE",
+  "061216030321": "AHMAD ALLIF MUHAIMIN BIN KAMARUDIN",
+  "060620100366": "AISYAH ADILAH BINTI AZMAN",
+  "061217070261": "AMEER LUTFI BIN ABDULLAH",
+  "061224030727": "AMMAR AMSYAR BIN AKBAR",
+  "060210030123": "HASMAWI BIN HASNAN",
+  "061006030251": "MOHAMAD AQIL DANISH BIN HAZMAN",
+  "060306031091": "MOHAMMAD AMIR IMAAN BIN ISMAIL",
+  "060619030065": "MOHAMMAD NU'MAN ALIF BIN NAZLY",
+  "060302030059": "MUHAMAD AMIRUL IZWAN BIN AZLAN",
+  "060316020193": "MUHAMMAD AQIL HAZMI BIN MOHD AB RAHMAN",
+  "060815060069": "MUHAMMAD HASIF AMSYAR BIN MOHD ZAINUL ABIDIN",
+  "060914010681": "MUHAMMAD KHAIRUL AIMAN BIN MOHD NASIR",
+  "060205030807": "MUHAMMAD SYAHIR BIN OTHMAN",
+  "061106101117": "MUHAMMAD SYAWAL BIN MOHD ZAMERI",
+  "060228030017": "NASIRUL AIDIB BIN MOHD ZUKI",
+  "060218140343": "NAZARUL ISMA HAIZAT BIN ZAWAWI",
+  "060411140521": "NIK MUHAMMAD HAZIM BIN NIK MOHAMAD",
+  "060329030286": "NUR SYAZWANI AMIRAH BINTI BADRUL HISYAM",
+  "061223030653": "AMIRUL HAIKAL BIN HAIRIL AMIR",
+  "060608030449": "MOHAMAD AMIR ASYRAF BIN NAZRI",
+  "061203031261": "MOHAMAD NASRUL HAKIM BIN MOHD YUSRAN",
+  "060213030639": "MOHAMAD SYAIFUL IZLEER BIN IBRAHIM",
+  "060806160025": "MOHAMMAD DANISH HAIKAL BIN NORHISYAM",
+  "061226030827": "MUHAMAD AIDIL HAKIMIE BIN MAT NASIR",
+  "060225030839": "MUHAMAD SIDDIQ BIN MAHAMAD",
+  "060131030643": "MUHAMMAD AIZAT BIN ABDUL KAMAL",
+  "060106030887": "MUHAMMAD ALIFF ERFAN BIN EZANEE",
+  "060920140159": "MUHAMMAD AMRU FITRI BIN MOHD ALIAS",
+  "061002030131": "MUHAMMAD DANISH ISKANDAR BIN MOHD ROZANI",
+  "060416131093": "MUHAMMAD HARRAZ FAUZAN BIN ROSLI",
+  "060618030055": "MUHAMMAD IRFAN IZZUDDIN BIN AZMI",
+  "060901160197": "MUHAMMAD ZULFI HAKIM BIN MOHD FAKHRUDIN",
+  "061222030221": "NIK AHMAD RIFQI BIN MOHD NORHASDI",
+  "060323030939": "NOR IZWAN BIN NOR IZHAM",
+  "061102030905": "TENGKU FARIS HAIKAL BIN TENGKU AHMAD FAIZAL",
+  "061021030356": "ALYA NABIHAH BINTI MOHD ROSDI",
+  "061108030906": "AMATULLAH ANIS BINTI MOHD SAIDI",
+  "061123101792": "DAMIA KARMILA BINTI SUHAIRRY IZHAM",
+  "060114030393": "MUHAMAD NAQRIEE CHEW BIN MOHAMMAD HISHAM CHEW",
+  "060208030263": "MUHAMAD WAFIY BIN BAHARIN",
+  "060919030999": "MUHAMMAD AMIRUL AIMAN BIN MOHD ZAMANI",
+  "061204030471": "MUHAMMAD AMMAR DANIESH BIN ROSHAIZAAD",
+  "050430030409": "MUHD HAIKAL LUQMAN BIN ABDUL MUHAIMININ",
+  "060205030970": "MURSYIDA BINTI MOHD SAPIEI",
+  "060916110512": "NAJIAN BINTI MOHD ANUAR",
+  "060521030999": "NIK MOHAMAD SHARIL BIN NIK JAYAWIRA",
+  "060718030618": "NUR AMNI SYAZWANI BINTI MOHAMMAD ZAIDI",
+  "060915110166": "NUR FAZLINA BINTI MUHAMMAD",
+  "060315030664": "NUR SYAZA ALIA BINTI AHMAD SHUKRI",
+  "060910030714": "SITI NORWARDINA BINTI MOHD ZULKIFLI",
+  "061127030274": "SITI NURAISHA BINTI MOHD SIDIK",
+  "060202140058": "TENGKU MIZA DAMIA BINTI TENGKU MOHD AZMI"
+};
+
+// tambahan khusus (Nama, MyKad, Dorm)
+let studentDormDB = JSON.parse(LS.getItem('studentDormDB') || '[]');
+const defaultDormSeed = [
+  {name:"MUHAMMAD HARITH HAMIZAN B. MUHAMAD ELMI", ic:"050825-03-0663", dorm:"2A1"},
+  {name:"NIK ILHAM KASYRAF B. HASMADI", ic:"050230-03-0753", dorm:"2A2"},
+  {name:"MUHAMMAD AKIF HAIRIZ B. MOHD. AZMI", ic:"050213-07-0553", dorm:"2A1"},
+  {name:"MUHAMMAD AKIF R. ZAKARIA", ic:"050928-03-0727", dorm:"2A1"},
+  {name:"SYAMIMI ARI IRFAN B. MOHD SAUTI", ic:"050920-03-0757", dorm:"2A1"},
+  {name:"SHAH NAZMI B. SHAHIRAN", ic:"051026-10-0043", dorm:"2A1"},
+  {name:"MUHAMMAD AIMAN B. MOHD YUSHARIE", ic:"051226-03-0657", dorm:"2A1"},
+  {name:"MUHAMMAD ROSLEE BIN MOHD ROSLAN", ic:"050805-03-0827", dorm:"2A1"},
+  {name:"NIK ZUHAIDE B. WANG MUSTAFA", ic:"050123-03-0666", dorm:"2A1"},
+  {name:"MUHAMAD HAKIMIE B. HASHIM", ic:"051129-03-0644", dorm:"2A1"},
+  {name:"MUHAMMAD DANIAL HAIKAL B. FAISA", ic:"051130-03-0823", dorm:"2A1"},
+  {name:"MUHAMMAD AMRU FITRI B. MOHD ALIAS", ic:"060920-14-0150", dorm:"2A3"},
+  {name:"ABDUL FATTAH B. IZAIMAN @MOHD IZALMAN", ic:"060716-03-0577", dorm:"2A3"},
+  {name:"MUHAMMAD WAFIY B. BAHARIN", ic:"060620-03-0658", dorm:"2A3"},
+  {name:"MOHAMMAD DANISH HAIKAL B. NORHIYAM", ic:"060823-03-0628", dorm:"2A3"},
+  {name:"NIK MUHAMMAD NIK BIN MOHAMAD", ic:"060114-03-0403", dorm:"2A3"},
+  {name:"MUHAMMAD ALI ARIFIN BIN AZMAN", ic:"060513-05-0863", dorm:"2A3"},
+  {name:"MUHAMMAD NAFIS AMSYAR BIN ZAINUL ABIDIN", ic:"060517-03-0825", dorm:"2A3"},
+  {name:"MUHAMAD AIMAN DANIAL BIN ABDUL", ic:"050430-03-0653", dorm:"2A3"},
+  {name:"MUHAMMAD AIDIL HAKIMIE BIN MAT NASIR", ic:"061226-03-0827", dorm:"2A3"},
+  {name:"MOHAMAD SYAFIUL IZLEER BIN IBRAHIM", ic:"061220-03-0874", dorm:"2A3"},
+  {name:"MUHAMMAD AMIRUL IKHWAN BIN MAT ZAIB", ic:"061228-03-0409", dorm:"2A3"},
+  {name:"MUHAMMAD ASHRAF BIN MOKHTAR", ic:"060822-03-0685", dorm:"2A3"},
+  {name:"MOHAMAD NASRUL HAKIM BIN MOHD YUSRAN", ic:"061203-03-1261", dorm:"2A4"},
+  {name:"HASMAWI BIN HASNAN", ic:"060210-03-0123", dorm:"2A4"},
+  {name:"MUHAMMAD AMMAR DANIESH BIN ROSHAIZAAD", ic:"061204-03-0471", dorm:"2A4"},
+  {name:"MUHAMMAD AMIRUL AIMAN BIN MOHD ZAMANI", ic:"060919-03-0997", dorm:"2A4"},
+  {name:"AMEER LUTFI BIN ABDULLAH", ic:"061217-09-0071", dorm:"2A4"},
+  {name:"MOHAMAD AQIL DANISH BIN HAZMAN", ic:"060106-03-0251", dorm:"2A4"},
+  {name:"MUHAMMAD SYAWAL BIN MOHD ZAMERI", ic:"060511-03-0460", dorm:"2A4"},
+  {name:"MUHAMMAD ZULFI HAKIM BIN MOHD FAKHRUDIN", ic:"060901-16-0197", dorm:"2A4"},
+  {name:"AHMAD ALLIF MUHAIMIN BIN KAMARUDIN", ic:"061216-03-0989", dorm:"2A4"},
+  {name:"MUHAMAD SYAHIR BIN OTHMAN", ic:"060503-03-0742", dorm:"2A4"},
+  {name:"NIK MOHAMAD SHARIL BIN NIK JAYAWIRA", ic:"061209-03-0425", dorm:"2A4"},
+  {name:"MOHAMAD ASYRAF AIKAL BIN MOHAMAD AZHAR", ic:"061203-03-0465", dorm:"2A4"},
+  {name:"MUHAMMAD FAZWAN B. NAZLI", ic:"060130-03-0473", dorm:"2A4"},
+  {name:"MOHAMMAD AMIR IMAN B. ISMAIL", ic:"060306-03-1091", dorm:"2A5"},
+  {name:"MUHD ALIFF ERFAN B. EZANEE", ic:"060106-03-0887", dorm:"2A5"},
+  {name:"MUHAMMAD AMIRUL IZWAN BIN AZLAN", ic:"060302-03-0059", dorm:"2A5"},
+  {name:"MUHAMMAD HARRAZ FAUZAN BIN ROSLI", ic:"060416-13-1093", dorm:"2A5"},
+  {name:"NIK AHMAD RIFQI BIN MOHD NORHASDI", ic:"061222-03-0221", dorm:"2A5"},
+  {name:"MUHAMMAD NAQRIE CHEW B. MOHAMMAD HISHAM CHEW", ic:"060114-03-0393", dorm:"2A5"},
+  {name:"MUHAMMAD IRFAN IZZUDDIN BIN AZMI", ic:"060618-03-0055", dorm:"2A5"},
+  {name:"MOHAMAD ARIEF HAIKAL B. AB RAHMAN", ic:"050423-03-0363", dorm:"2A2/2A5"},
+  {name:"WAN MOHAMAD IQMAL B. WAN MOHD NASIR", ic:"050724-03-1079", dorm:"2A1/2A5"},
+  {name:"MOHAMAD AZRUL B. ANIZAN", ic:"050806-01-0900", dorm:"2A2/2A5"},
+  {name:"MUHAMMAD SIDDIQ B. MAHAMAD", ic:"060225-03-0839", dorm:"2A5"},
+  {name:"MUHAMMAD RAHIMI FITRI B. ROSLAN", ic:"061006-03-0737", dorm:"2A5"},
+  {name:"MUHAMMAD ISYRAF BIN ISMAIL", ic:"061220-03-0383", dorm:"3A4/2A5"},
+  {name:"MUHAMMAD ADAM B. MOHD ADNAN", ic:"071002-03-6093", dorm:"2B1/3A1"},
+  {name:"MUHAMMAD AIRUL B. AZMAN", ic:"071107-14-0731", dorm:"2B1/3A1"},
+  {name:"MUHAMMAD AIDIQ YUSHAIREL B. MASOD @ YAHYA", ic:"071203-03-1175", dorm:"2B1/2A1"},
+  {name:"MUHAMMAD ASYRAF B. MOHD SYARIEF", ic:"070909-05-0071", dorm:"2B1/3A2"},
+  {name:"WAN MUKHRIZ QAYYUM B. WAN HASNUL HISHAM", ic:"070813-02-0521", dorm:"2B1/3A1"},
+  {name:"MUHAMMAD SYAWAL B. SATAR", ic:"070612-03-0619", dorm:"2B1"},
+  {name:"MUHAMMAD ADAM ARIF B. MOHD RAZALI", ic:"070614-03-0567", dorm:"2B1/3A1"},
+  {name:"NAUFAL RIFQI B. MOHD KHAIRUL", ic:"070916-03-1063", dorm:"2B1/3A1"},
+  {name:"AYMAN HANNAN B. MAWARDI", ic:"070427-03-0385", dorm:"2B1/3A2"},
+  {name:"MUHAMAD HAIKAL BIN ZAMRI", ic:"070530-03-0607", dorm:"2B1"},
+  {name:"MUHAMMAD FAREEZ BIN KAMALRUDIN", ic:"070912-03-0661", dorm:"2B1"},
+  {name:"MOHAMMAD ADAM SYAKIRIN B. MOHAMMAD ANUAR", ic:"071102-03-0103", dorm:"2B1/3A2"},
+  {name:"MUHAMMAD NADHIF ISYHAD B. MOHD NASIR", ic:"071217-03-0197", dorm:"2B2/3A2"},
+  {name:"MOHAMAD ZUL HAIKAL B. DZULATFHI", ic:"070920-03-0493", dorm:"2B2/3A2"},
+  {name:"MUHAMMAD HARITH AZFAR B. HAMDAN", ic:"071107-11-0073", dorm:"2B2"},
+  {name:"MOHAMMAD ZUHAIMAN BIN IBRAHIM", ic:"071208-03-0291", dorm:"2B2/3A2"},
+  {name:"MUHAMMAD AMMIRUL FITRI B. MOHD FAUZAN", ic:"070910-03-0959", dorm:"2B2/3A2"},
+  {name:"MOHAMMAD AZRI FAIZ BIN MOHD NORAANDI", ic:"070315-03-0057", dorm:"2B2/3A1"},
+  {name:"MOHAMAD ASYRAF HAKIMI B. MOHD HAFEZ", ic:"070120-08-0249", dorm:"2B2/3A1"},
+  {name:"MUHAMMAD ZAIM ZAFRI B. MUHAMAD HIRMI", ic:"071202-01-0583", dorm:"2B2"},
+  {name:"AHMAD NOR HAZIM B. MOHD FADZIL", ic:"071210-10-0159", dorm:"3B4"},
+  {name:"MUHAMAD KHAIRUL IMAN B. MAHADI", ic:"070924-03-0749", dorm:"2B2"},
+  {name:"MOHAMAD DANISH HAIQAL BIN MOHD NASIR", ic:"070709-03-1095", dorm:"2B2/3A1"},
+  {name:"MUHAMMAD IRFAN HAZIQ BIN KHALID", ic:"070927-03-0621", dorm:"2B2/3A2"},
+  {name:"MUHAMAD KHAIRUL WAZINI B. MD ABDUL RAZID", ic:"070116-03-0265", dorm:"2B3"},
+  {name:"NAZEEM ARIQUE B. NAZRULAMAN", ic:"070920-16-0079", dorm:"2B3/3A2"},
+  {name:"MUHAMAD AMIRUDDIN B. AMRAN", ic:"070125-03-0275", dorm:"2B3"},
+  {name:"MUHAMMAD LUKMAN HAKIM BIN MOHD ZAMRI", ic:"070308-03-0905", dorm:"2B3"},
+  {name:"MUHAMMAD AMIRIN AKRAM B. ALWI", ic:"070108-03-0409", dorm:"2B3"},
+  {name:"NIK AKMAL ADIB B. NIK AZLEE", ic:"070903-03-0483", dorm:"2B3"},
+  {name:"TUAN ANAS SAFWAN B. TUAN AZUAN", ic:"070714-10-0235", dorm:"2B3/3A1"},
+  {name:"MUHAMMAD FARIS AKMAL B. ARMAN", ic:"070126-03-0429", dorm:"2B3/3A2"},
+  {name:"LUQMAN HAKIM B. SAZALI", ic:"070417-03-0349", dorm:"2B3"},
+  {name:"MOHAMAD SAYUTI BIN SALLEH", ic:"070117-03-0339", dorm:"2B3"},
+  {name:"MUHAMAD BAHA HAZIM BIN MOHD AZIZI", ic:"070923-03-0621", dorm:"2B3/3A2"},
+  {name:"MUHAMAD DANIAL BIN NORISAM", ic:"070702-03-0073", dorm:"2B3/3A1"},
+  {name:"AHMAD MU'IZ AHZA B. NOOR AKMAL", ic:"070203-03-0415", dorm:"2B4/3A2"},
+  {name:"AIMAN ASYRAF B. MOHAMAD NASRUN", ic:"070518-03-0807", dorm:"2B4/3A1"},
+  {name:"MUHAMMAD AMIRUL MUKMININ BIN SUHAIMI", ic:"071027-03-0401", dorm:"2B4"},
+  {name:"MUHAMMAD ZULKHAIRI B. MUHAMMAD FADHIR KHAZANI", ic:"070828-03-0415", dorm:"2B4"},
+  {name:"MUHD AMIRUL ZAHASAN B. KANDIHADRAMI", ic:"071107-03-0575", dorm:"2B4"},
+  {name:"MUHAMMAD SAFWAN B. ZULKURNAIN", ic:"070715-03-0511", dorm:"2B4"},
+  {name:"AHMAD NAILAN ASRAF BIN ABDUL HALIM", ic:"070207-03-0615", dorm:"2B4/3A1"},
+  {name:"FARISH DANIAL B. ZULKAFLI", ic:"071104-08-0075", dorm:"2B4"},
+  {name:"AHMAD AFIQ HAFIZUDDIN B. ROSMAN", ic:"081122-03-0433", dorm:"2B4/3B4"},
+  {name:"NIK MOHD DANISH AIMAN B. MOHD LATPI", ic:"080407-03-0619", dorm:"2B4/3B1"},
+  {name:"MUHAMMAD LAITH ABQORY B. LOKMAN", ic:"081021-03-0565", dorm:"2B4"},
+  {name:"NIK ANAS NIK AZIMIN", ic:"081007-12-0951", dorm:"2B4"},
+  {name:"MUHAMMAD AMIR FARHAN B. MOHD KHAIRUL ANUAR", ic:"080320-16-0031", dorm:"3B1/3B5"},
+  {name:"MUHAMAD AIDIL IZHAM B. ABDULLAH", ic:"080711-03-0023", dorm:"3B1"},
+  {name:"MUHAMMAD DARWISY HAIDAR B. NOR ASWADI", ic:"081128-14-0051", dorm:"3B1"},
+  {name:"MUHAMMAD HAIRI IMRAN B. MOHD HANIF", ic:"080118-03-0479", dorm:"3B1/3B5"},
+  {name:"MUHAMMAD NOR SHAHRUL AIMAN B. MOHD FAIZAL", ic:"080719-03-1127", dorm:"3B1"},
+  {name:"MUHAMMAD HAMIZAN B. MOHD SUFIAN", ic:"080130-03-0359", dorm:"3B1"},
+  {name:"ZAHIRUL HAKIM B. ZAINUDDIN", ic:"080416-03-0151", dorm:"3B1"},
+  {name:"MUHAMMAD AFIQ AIMAN B. ROSLAN", ic:"081207-03-0133", dorm:"3B1"},
+  {name:"MUHAMMAD AMIRUL AIMAN B. AMRAN", ic:"080604-03-0255", dorm:"3B1"},
+  {name:"ABDULLAH HAKIM B. ANUAR", ic:"081228-03-0773", dorm:"3B1"},
+  {name:"AHMAD NABIL AQIL B. ABDULLAH", ic:"080817-03-0102", dorm:"3B1"},
+  {name:"ISRAQ IZZAT B. IBRAHIM", ic:"080605-03-0011", dorm:"3B1"},
+  {name:"MUHAMMAD ALIF IFAT B. AZANIZAM", ic:"081028-03-0373", dorm:"3B2"},
+  {name:"MOHAMMAD NAIM SUHAILI B. MOHD SUHAIMI", ic:"081011-13-0781", dorm:"3B2"},
+  {name:"HAZIQ IRHAM B. HAZIZI", ic:"080919-03-0043", dorm:"3B2"},
+  {name:"AHMAD AZIM KAISAN B. PERWIRA", ic:"080720-03-0291", dorm:"3B2"},
+  {name:"NIK DANISH IRFAN B. NIK AHMAD ZULHIMI", ic:"080527-16-0389", dorm:"3B2/3B1"},
+  {name:"MUHAMMAD ILMAN ILYAS B. SUPARNO", ic:"080706-03-1187", dorm:"3B2"},
+  {name:"WAN AHMAD IRSHAD B. WAN AZHARI", ic:"080706-03-1187", dorm:"3B2"},
+  {name:"MUHAMMAD FARIS HAKIM B. MOHD ROZHAN", ic:"080316-01-0153", dorm:"3B2"},
+  {name:"MUHAMMAD ADAM HAIKAL B. SAID", ic:"080518-03-1155", dorm:"3B2"},
+  {name:"MUHAMMAD AMMAR IKHWAN B. MOHD BAKHTIAR AMINI", ic:"080622-03-0507", dorm:"3B2"},
+  {name:"MUHAMMAD THAQIF MUKHRIZ B. MOHD SHAZWAN", ic:"081203-03-0371", dorm:"3B2"},
+  {name:"MUHAMMAD SHAHRIN B. HANAFI", ic:"080916-03-0481", dorm:"3B2"},
+  {name:"KHAIRUL HUDA B. ADLI ASAS", ic:"080923-03-0697", dorm:"3B3"},
+  {name:"MUHAMMAD HAZIMI B. MUHAMAD TAMIZI", ic:"080325-03-0201", dorm:"3B3"},
+  {name:"MUHAMMAD AKMAL IRFAN B. MOHD GHAZALEY", ic:"080322-03-0707", dorm:"3B3"},
+  {name:"MUHAMMAD ARASH KHAN B. MOHD DAILAMI", ic:"080327-03-0125", dorm:"3B3/3B5"},
+  {name:"AHMAD LOQMAN B. MOHD SHUKRI", ic:"081223-03-0801", dorm:"3B3"},
+  {name:"MOHAMMAD NOR ARIFF FIKRI B. HAMZAH", ic:"080615-03-0023", dorm:"3B3"},
+  {name:"WAN QAISY HAZIQ MIKAIL B. WAN MOHD FADIL", ic:"081219-13-0721", dorm:"3B3"},
+  {name:"WAN MUHAMMAD ALYF DANIEL B. WAN MOHD ZAMRI", ic:"080828-03-0449", dorm:"3B3"},
+  {name:"MUHAMMAD IRFAN B. MOHD ROHUDDEN", ic:"080511-03-0571", dorm:"3B3"},
+  {name:"MUHAMMAD SYAFANEY B. AB RAZAK", ic:"080622-03-0681", dorm:"3B3"},
+  {name:"DANISH HAIKAL BAKTY B. IZWAN BAKTY", ic:"081109-03-0963", dorm:"3B3"},
+  {name:"RUSYAIDY AIBAQ B. BADRI", ic:"081126-03-0963", dorm:"3B3"},
+  {name:"AHMAD LUQMAN NULHAKIM B. MOHD ZAINUDDIN", ic:"081218-03-1043", dorm:"3B3"},
+  {name:"AHMAD MUKHRIZ SYAWAL B. NOOR AKMAN", ic:"081018-03-0759", dorm:"3B4"},
+  {name:"ADAM JAZIMIN B. MOHAMED NIZAM", ic:"080125-12-0173", dorm:"3B4"},
+  {name:"WAN MUHAMMAD AIDIL HAIKAL B. WAN AZRUL HISYAM", ic:"080531-03-0763", dorm:"3B4"},
+  {name:"AHMAD AFIF B. AH AFANDI", ic:"080317-03-0631", dorm:"3B4/3B5"},
+  {name:"MUHAMMAD HIDAYAT B. MOHAMAD HAD", ic:"080315-03-1163", dorm:"3B4"},
+  {name:"MUHAMMAD AKIL MUNIF B. MOHD HUZIRMAN", ic:"080328-01-0855", dorm:"3B4"},
+  {name:"MUHAMAD NAQIB AZIM B. MOHD SUKRI", ic:"080216-03-0413", dorm:"3B4"},
+  {name:"MOHD FARHEM B. MOKHTAR", ic:"080525-03-0767", dorm:"3B4"},
+  {name:"MUHAMMAD ALIFH FIRDAUS B. MOHD SHUKRI", ic:"080803-03-0763", dorm:"3B4"},
+  {name:"MOHAMMAD IRFAN ISKANDAR B. MOHD ZAKI", ic:"080321-03-0757", dorm:"3B4"},
+  {name:"MUHAMMAD FARIS SIRHAN B. M. FAIZAL", ic:"080111-03-0943", dorm:"3B4"},
+  {name:"SITI NUR MURIZAH BT. ABDULLAH", ic:"081009-02-0612", dorm:"1C1"},
+  {name:"NUR ANIS ZULAIKHA BT. ROSLY", ic:"080807-03-1012", dorm:"1C1/1C3"},
+  {name:"NUR AINUN ASYIQIN BT. MOHD SAIPU", ic:"080926-03-0354", dorm:"1C1"},
+  {name:"AIFAA DANIA BT. AZIZI", ic:"081127-03-0600", dorm:"1C1"},
+  {name:"NUR DAMIA BT. MOHD RUZAIMI", ic:"080804-03-0778", dorm:"1C1"},
+  {name:"NUR AFIQAH AFZA BT. MOHD AZRAN", ic:"080329-14-0432", dorm:"1C1"},
+  {name:"NIK NURIEL AMIRAH BT. NIK MOHAMAD FAIZUL", ic:"080505-03-0700", dorm:"1C1"},
+  {name:"NURUL ALIA MAISARAH BT. MOHD RAZALI", ic:"081129-03-0612", dorm:"1C1"},
+  {name:"NUR SHAHIRAH BT. MOHD RIZUAN", ic:"081110-03-0858", dorm:"1C1"},
+  {name:"NURHANANI ARISSA BT. MOHD ZAHID", ic:"080710-03-0814", dorm:"1C1"},
+  {name:"NURIN QISTINA BT. AFFENDI", ic:"080709-03-0480", dorm:"1C1"},
+  {name:"NOR FARISA NATASYA BT. MOHD HAZYIZA", ic:"081228-03-0634", dorm:"1C1"},
+  {name:"WARRINAR A/P SA WAN", ic:"080511-03-0782", dorm:"1C2"},
+  {name:"IMTIYAZ WIZNI AUEFA BT. MOHD RUSTAM", ic:"081008-05-0078", dorm:"1C2"},
+  {name:"NUR FARISHA ERMEELISH BT. WANSU", ic:"080505-03-0256", dorm:"1C2"},
+  {name:"NURUL AIN HADRAH BT. MOHD SHAHRIZAN", ic:"080123-03-0496", dorm:"1C2"},
+  {name:"NUR KHAIRUNISAH UMAIRAH BT. AZMI", ic:"080612-03-0052", dorm:"1C2"},
+  {name:"NUR SYAMIRA BATRISYA BT. MOHD ZIN", ic:"080209-03-0634", dorm:"1C2"},
+  {name:"NIK NUR SYAFI'I BT. AB GHANI", ic:"081008-03-0026", dorm:"1C2"},
+  {name:"NUR ALYA SUHADA BT. ANUAR", ic:"080519-03-0656", dorm:"1C2"},
+  {name:"KASH ELIS SYAKIRA BT. SAYUTI", ic:"080923-03-0180", dorm:"1C2"},
+  {name:"NUR WAFA ZAFIRAH BT. MOHD YUSRIE", ic:"080729-06-0722", dorm:"1C2"},
+  {name:"NUR FATEHAH BT. MUHD BASRI", ic:"080818-10-0458", dorm:"1C2"},
+  {name:"NUR AUNI INSYIRAH BT. MOHD AZHAM", ic:"080301-06-0422", dorm:"1C3"},
+  {name:"AMYLA HAZWANI BT. AHMAD RADUAN", ic:"081108-03-0568", dorm:"1C3"},
+  {name:"SYIFA ILLISYA BT. MOHD SAUTI", ic:"080928-08-0064", dorm:"1C3"},
+  {name:"NOR SAYIDA QISTINA BT. MASYIYIMI", ic:"080726-03-0990", dorm:"1C3"},
+  {name:"NUR AIN EZLYN BT. JAFIRDIN", ic:"080727-03-0554", dorm:"1C3"},
+  {name:"NUR DANIA HANI BT. NOR AZHAR", ic:"080220-14-0594", dorm:"1C3"},
+  {name:"NUR ADHA ALIENA BT. MOHD ROHAIDI", ic:"081208-03-0186", dorm:"1C3"},
+  {name:"TENGKU NIA ZHAFREEN BT. ENGKU IBRAHIM", ic:"080530-03-0278", dorm:"1C3/2C1"},
+  {name:"PUTRI NURHANA QAISARA BT. MUHAMAD LUKMAN", ic:"080609-10-1526", dorm:"1C3"},
+  {name:"NUR KHUSNA ARISYAH BT. KHUZAIMI", ic:"081228-03-0298", dorm:"1C3"},
+  {name:"NIK NUR IMAN MARYAM BT. NIK MOHD GHANI", ic:"080516-03-0570", dorm:"1C3"},
+  {name:"AZEYAGARI GAIS BT. AZHAR", ic:"080519-03-0496", dorm:"1C3"},
+  {name:"NURUL NAJWA BT. MOHAMMAD NAZRI", ic:"080912-11-0214", dorm:"1C3"},
+  {name:"NUR FARHAIN SAFIYYAH BT. MOHD PABIR", ic:"080809-03-0582", dorm:"1C3"},
+  {name:"IRIN FADRATUL BT. AMIRUDDIN", ic:"090513-03-0048", dorm:"1C3"},
+  {name:"NURUL ASYIQIN DIYANAH BT. ZUHAIRI", ic:"090428-10-0152", dorm:"1C3"},
+  {name:"NIK NUR WALIN AZRA BT. MOHD SABRI", ic:"080617-03-0502", dorm:"1C3"},
+  {name:"SYAZA SYAHIDA WAFA BT. ABDULLAH", ic:"081130-08-0422", dorm:"2C1/1C2"},
+  {name:"NURIN IRDINA BT. MOHD ZAILANI", ic:"081206-10-0048", dorm:"2C1"},
+  {name:"CHE ALIESYA NURASYIQIN BT. CHE NORDIN", ic:"081201-03-0474", dorm:"2C1"},
+  {name:"NUR AINIE NATASYA BT. RUSMI", ic:"080914-03-0904", dorm:"2C1"},
+  {name:"SALWANI BT. MOHD KHAIRUL NIZAM", ic:"080912-03-0214", dorm:"2C1"},
+  {name:"NUR ANIES SYAZWANI BT. NAZRI", ic:"080224-03-0974", dorm:"2C1"},
+  {name:"NUR KHAYRA DAMIA BT. ROHAIZAD", ic:"080621-03-0880", dorm:"2C1"},
+  {name:"EMVILIYEANA BT. ZURAMI", ic:"080214-01-0806", dorm:"2C1/1C1"},
+  {name:"ALUSA SA'ADAH BT. MOHD ASDI", ic:"080822-11-0456", dorm:"2C1"},
+  {name:"NURUL FAREESYA BT. MOHD SUHAIMI", ic:"080922-03-0488", dorm:"2C1"},
+  {name:"NURUL AIN NAJWA BT. ASRUL AZEEM", ic:"081109-03-0578", dorm:"2C1"},
+  {name:"NUR FATIN SYAFIRA BT. MOHD YUSOFF", ic:"081019-03-0152", dorm:"2C1"},
+  {name:"DHIA QAISARA BT. KAMARUL HIZAD", ic:"080803-03-0952", dorm:"2C2"},
+  {name:"NUR NAIJAH DAMIA BT. MOHD AZIKI", ic:"081110-03-1068", dorm:"2C2"},
+  {name:"SITI NUR SALSBILLA BT. MOHD RODZI", ic:"080606-03-0058", dorm:"2C2"},
+  {name:"NUR SYUHADA BT. MOHD SAIDI", ic:"081205-03-0414", dorm:"2C2"},
+  {name:"SITI SOLEHAH BT. ALA'ALAWI", ic:"081125-03-0915", dorm:"2C2"},
+  {name:"NADIATUL ROSZAIREEN BT. NAZRI", ic:"080110-03-0052", dorm:"2C2"},
+  {name:"NUR INTAN SYAMIMIE BT. MOHD DIN", ic:"080730-03-0184", dorm:"2C2"},
+  {name:"NUR ZAWANI BT. NASHIRUDDIN SHAM", ic:"081219-03-0798", dorm:"2C2"},
+  {name:"ANIS SYUHADA BT. ABD RAHIM", ic:"080618-06-0420", dorm:"2C2"},
+  {name:"NUR AISHAH BT. ABDUL JAIL", ic:"080630-03-0822", dorm:"2C2"},
+  {name:"SITI NUR BAIYAH BT. MOHAMMAD AZMI", ic:"070214-03-0664", dorm:"2C3/2D2"},
+  {name:"SYAFIATUN SYAMILA BT. AB. GHANI", ic:"071213-03-1054", dorm:"2C3/2D2"},
+  {name:"NOOR AZLINA BT. ALIAS", ic:"070721-03-0706", dorm:"2C3/2D2"},
+  {name:"NUR ALIA NATASYA BT. MOHD AZAM", ic:"070905-05-0786", dorm:"2C3/2D3"},
+  {name:"RAJA SHAZLINA BT. ABDULLAH", ic:"091103-03-1348", dorm:"2C3"},
+  {name:"NUR SOFEA AMIRA BT. MOHD SUHAIZI", ic:"091013-03-1220", dorm:"2C3"},
+  {name:"WAN MARSYA BT. WAN MARZUKI", ic:"090822-10-0812", dorm:"2C3"},
+  {name:"NUR SYAFIQAH QISTINA BT. ROSMADI", ic:"090210-10-0248", dorm:"2C3"},
+  {name:"NUR ALISA BT. ZU HANWA @ ZUL ANUAR", ic:"070108-03-0396", dorm:"2C3/2D3"},
+  {name:"NUR FARISHA BT. HASHIM", ic:"091112-03-0690", dorm:"2C3"},
+  {name:"NURATIKAH BALQIS BT. ABDULLAH", ic:"070511-03-0214", dorm:"2C4/2D3"},
+  {name:"NUR ADLIN WAFI BT. MOHD APANDI", ic:"070621-14-0318", dorm:"2C4/2D4"},
+  {name:"SHARIFAH ALISSA BT. SYED ARMAN", ic:"070806-03-1046", dorm:"2C4/2D4"},
+  {name:"AISYATUL SYAFIQA BT. SAIDI", ic:"071222-10-0356", dorm:"2C4/2D3"},
+  {name:"NUR NASHRAH BT. MUSTAPHA", ic:"071010-03-0720", dorm:"2C4"},
+  {name:"NAJIHA RAINHANA BT. MOHD NOORDIN", ic:"070525-10-0586", dorm:"2C4/2D4"},
+  {name:"NURULAIN BT. MOHD HANAPIAH", ic:"071013-03-0203", dorm:"2C4/2D4"},
+  {name:"NIK NUR EMILYA BT. NIK NAZERI", ic:"071212-03-1270", dorm:"2C4/2D3"},
+  {name:"NURUL SYAFIKAH BT. MAHADI", ic:"070727-03-0694", dorm:"2C4/2D3"},
+  {name:"NUR ATHIRAH AIMUNI BT. MD ZALIMI", ic:"071211-03-0852", dorm:"2C4/2D4"},
+  {name:"SITI NUR BAIYAH BT. MOHD AZMI", ic:"070524-03-0264", dorm:"2C4/2D4"},
+  {name:"NIA IHDINA QHALISHA BT. ZULKERNAN", ic:"070811-03-0048", dorm:"2C4/2D4"},
+  {name:"TUAN NUR INTAN ZULAIKHA BT. TUAN ASMADI", ic:"050113-03-0720", dorm:"2D4"},
+  {name:"NIK NUR EMYLIA EMYLIN BT. NIK MASANIZAM", ic:"050113-03-0214", dorm:"2D4"},
+  {name:"NUR IZZAH AZIRA BT MOHD RAFI", ic:"050608-03-0650", dorm:"2D4"},
+  {name:"NUR HUSNA AISYA BT. AWANG", ic:"050109-03-0736", dorm:"2D4"},
+  {name:"NURUL AZLIN BT. AMRAN", ic:"051202-03-0436", dorm:"2D4"},
+  {name:"SITI SARAH HASNUN BT. MOHD SABRI", ic:"051115-03-0702", dorm:"2D4"},
+  {name:"NUR EDLEEN FAZRYN BT. MOHD FAIZ", ic:"051205-03-0984", dorm:"2D4"},
+  {name:"NUR ERYNA ALESYA BT MOHD RAZALI", ic:"050217-14-0588", dorm:"2D5"},
+  {name:"NUR AINUL SYAHIRAH BT. RISWADI", ic:"050602-03-0190", dorm:"2D5"},
+  {name:"NUR ALYA BATRISYA BT. AZRAL", ic:"050825-03-0980", dorm:"2D5"},
+  {name:"WAN QISTINA QURRATUL AIN BT. WAN MOHD FADIL", ic:"050817-18-0762", dorm:"2D5"},
+  {name:"NUR FATEHAH BT NAZALADIN", ic:"050213-03-0072", dorm:"2D5"},
+  {name:"MALISSA ADLINA BT. MAHAZAN", ic:"050713-04-0664", dorm:"2D5"},
+  {name:"NUR AIZAH BT. MUHAMAD HUSSEIN", ic:"051231-03-0742", dorm:"2D5"},
+  {name:"NUR FATIN SYAZANA BT. SYARIZAN", ic:"050127-01-0144", dorm:"2D5"},
+  {name:"SUWAIBAH NURANI BT. HILMEE", ic:"051211-03-0382", dorm:"2D5"},
+  {name:"SITI NUR RAUDAH BT. ZAMRI", ic:"051231-03-0670", dorm:"2D5"},
+  {name:"SITI ASMA'A BT. ABDULLAH", ic:"051213-03-0572", dorm:"2D5"},
+  {name:"ROSE NURAQILAH BT. ROSMAN", ic:"050721-03-0206", dorm:"2D6"},
+  {name:"PUTRI ZAFRI ZAFIZA BT. ROSLAN", ic:"090819-03-1318", dorm:"2D6"},
+  {name:"SITI NUR AISHAH BT. ZAMRI", ic:"090126-03-0574", dorm:"2D6"},
+  {name:"MUHAMMAD FARIS B. ROSHASFARIZAN", ic:"090528-03-0307", dorm:"3A1/2B1"},
+  {name:"MUHAMMAD DAIM B. MOHD KHAIRY AZREEN", ic:"090731-03-0273", dorm:"3A1/2B1"},
+  {name:"MUHAMMAD AZIM FARHAN B. MOHD SABRI", ic:"090601-03-0099", dorm:"3A1/2B1"},
+  {name:"MUHAMMAD THAQIF B. ZUHAIRI", ic:"091223-03-0075", dorm:"3A1/2B1"},
+  {name:"PUTRA ADAM MUSTAQIM B. MOHD FAIZUL", ic:"100101-06-0327", dorm:"3A1/2B1"},
+  {name:"MUHAMMAD AFIQ HAZIQ B. HASMADI", ic:"090711-06-0133", dorm:"3A1/2B1"},
+  {name:"MEGAT RAYYAN NAUFAL B. MEGAT RUSLAN", ic:"091003-03-0739", dorm:"3A1/2B1"},
+  {name:"FAHIM MURSYIDI B. MOHAMAD FADZALIE", ic:"091213-03-0045", dorm:"3A1/2B1"},
+  {name:"MUHAMAD AFIQ B. RUSLI", ic:"090515-03-0885", dorm:"3A1/2B1"},
+  {name:"MUHAMMAD SYAFIMI B. CHE AZMIR", ic:"090223-03-0461", dorm:"3A1/2B1"},
+  {name:"CHE MUHAMMAD AFIQ B. CHE MOHD SHAMSUL", ic:"090324-03-0073", dorm:"3A1/2B1"},
+  {name:"MALEQ MUHAMMAD B. ABD MALEK", ic:"090119-10-0343", dorm:"3A1/2B1"},
+  {name:"AADIM AHMADI B. MOHD SHAKIR", ic:"091222-10-1269", dorm:"3A2"},
+  {name:"RAJA SHAMEL DARWISH B. RAJA SHAMSUL KHAIRUL", ic:"090507-10-0417", dorm:"3A2"},
+  {name:"MUHAMMAD DUSTUURI B. MAHMUD", ic:"091204-03-0727", dorm:"3A2"},
+  {name:"MUHAMMAD ADIF HARRAZ B. MOHD AZMI", ic:"090306-03-0467", dorm:"3A2"},
+  {name:"MUHAMMAD ARIF B. AMINAHAR", ic:"090401-03-0545", dorm:"3A2"},
+  {name:"AHMAD ALIF AFIFI B. ABDUL GHANI", ic:"090720-03-1051", dorm:"3A2"},
+  {name:"MUHAMMAD HAIQAL B. CHE ZAMRI", ic:"091231-05-0481", dorm:"3A2"},
+  {name:"MUHAMMAD SYAHMI AMYSAR B. SHOLEH", ic:"090219-03-0207", dorm:"3A2/2B2"},
+  {name:"AHMAD IZZUDDIN B. ABDUL HADI", ic:"091120-03-0287", dorm:"3A2"},
+  {name:"MOHAMMAD ADZIQ HAKIMI B. MOHAMMAD ASRI", ic:"090909-08-4333", dorm:"3A2"},
+  {name:"ABDUL HARRAZ DANISH B. MUHAMMAD RAIHAN", ic:"090326-03-0413", dorm:"3A2"},
+  {name:"MOHAMAD HANIFF B. AWANG ALI", ic:"071101-03-0769", dorm:"3A2"},
+  {name:"MUHAMMAD SHAFIQZAM B. SALLEH", ic:"091014-03-0953", dorm:"3A3/2B3"},
+  {name:"AHMAD ADAM B. MOHD AZAM", ic:"091111-16-0135", dorm:"3A3/2B3"},
+  {name:"KU MUHAMMAD AIZZAT B. KU ISKANDAR", ic:"091125-03-0566", dorm:"3A3/2B3"},
+  {name:"MUHAMMAD IMAN ZAFRAN B. MOHD ZAKEE", ic:"091130-03-0619", dorm:"3A3/2B3"},
+  {name:"MUHAMAD ADIB AFHAM B. MUHAMAD ASRAF", ic:"090925-03-0933", dorm:"3A3/2B3"},
+  {name:"MUHAMMAD IRFAN ZAKWAN B. MOHD IRWAN", ic:"091129-03-0363", dorm:"3A3"},
+  {name:"DHIA' UWAISH MIFFDZAL B. SHAHABUDDIN MISHDAN", ic:"090814-03-0025", dorm:"3A3/2B3"},
+  {name:"MUSYRIF DANIAL B. MOHAMAD", ic:"091019-03-0995", dorm:"3A3/2B3"},
+  {name:"MUHAMMAD AFIQ ASHRAF B. HALIM", ic:"090507-03-0201", dorm:"3A3"},
+  {name:"MOHAMED RIFQI EDIKA B. MOHD ROSLI", ic:"090317-10-1101", dorm:"3A3/2B3"},
+  {name:"MUHAMMAD HAIQAL TAN B. ADHWA", ic:"091114-10-0875", dorm:"3A3/2B3"},
+  {name:"MUHAMMAD DANISH FARHAN B. NOR HAZANI", ic:"090915-03-1131", dorm:"3A3/2B3"},
+  {name:"MNUHAMMAD ADAM AQIL B. AHMAD FADZIL", ic:"090326-03-0755", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD DANIAL RAYYAN B. ABU BAKAR", ic:"090421-14-0485", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD AQIL B. AZRI", ic:"090716-03-0347", dorm:"3A4/2B4"},
+  {name:"WAN MUHAMMAD ZUHAIRI SYAMIM B. WAN MOHD ZUKI", ic:"090123-03-0181", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD AMIN NASRIN B. ROSNELIFAZUR", ic:"090813-03-0517", dorm:"3A4/2B4"},
+  {name:"AHMAD AQIL AMRULLAH B. ABD AZIZ", ic:"090820-03-1083", dorm:"3A4"},
+  {name:"MUHAMMAD ASYRAF HAKIMI B. MOHD KHAIRUL", ic:"090622-03-0995", dorm:"3A4"},
+  {name:"MUHAMMAD RAIS IRFAN B. ROZAINI", ic:"090524-03-0965", dorm:"3A4/2B4"},
+  {name:"MOHAMMAD ARIFF ARSHAD B. MOHD ASHRAF", ic:"090717-03-0381", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD RAYYAN YUSUF B. SAFAWI", ic:"091014-10-0085", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD DANISH HAZIQ B. MOHD AZHAR", ic:"090201-03-0655", dorm:"3A4/2B4"},
+  {name:"KU MOHAMAD ANAS B. KU MOHAMAD JAMALUDIN", ic:"091105-10-1657", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD HARIZ HAZIM B. KHAIRIL IZWAN", ic:"091124-03-0109", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD ADAM RIFQI B. KHAIRUL NIZAM", ic:"091218-03-0437", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD ALIF SYAHDAN B. MOKHTAR", ic:"070924-03-0861", dorm:"3A4/2B4"},
+  {name:"MUHAMMAD AIMAN DANIAL B. ABU BAKAR", ic:"070904-02-0543", dorm:"3A4"},
+  {name:"MUHAMMAD IRFAN DARWISH B. MOHD FAIZUL", ic:"090729-03-0243", dorm:"3A5/2B3"},
+  {name:"MUHAMMAD ADAM B. MUHAMMAD HANIF", ic:"090323-03-0493", dorm:"3A5/2B3"},
+  {name:"MUHAMMAD MUZAKKIR B. MOHD MONZIR", ic:"091028-08-1049", dorm:"3A5/2B2"},
+  {name:"TUAN NUR ATHIRAH BT. TUAN MOHD AYUB", ic:"091006-03-0160", dorm:"2C7"},
+  {name:"NOR ALEESYA QISTINA BT. MOHAMAD TARMIZE", ic:"090921-14-0086", dorm:"2C7"},
+  {name:"NUR ADRIANA BT. ABU BAKAR", ic:"090421-14-0784", dorm:"2C7"},
+  {name:"TEJA IZZATI BT. AINOR AZLAN", ic:"090325-16-0044", dorm:"2C7"},
+  {name:"NUR AIN MAISARAH BT. YUSAZANI", ic:"090302-03-0080", dorm:"2C7"},
+  {name:"NURUL AMIRAH BT. ISMAIL", ic:"090309-03-0446", dorm:"2C7"},
+  {name:"BATRISYA SAFIAH BT. BAKHORI", ic:"090703-03-0112", dorm:"2C7"},
+  {name:"DELISHA KAISARA BT. JOHAN EMY", ic:"090729-10-1386", dorm:"2C7"},
+  {name:"DIEYANA NATASYA BT. SHAMSURI", ic:"090321-03-0165", dorm:"2C7"},
+  {name:"ALEESYA SOFEA BT. MOHD TARMIZI", ic:"090323-03-0943", dorm:"2C7"},
+  {name:"NUR AMALIN BT. MOHD ARIFFIN", ic:"091122-03-0918", dorm:"2C7"},
+  {name:"SITI KHODIJAH BT. MOHD SALIHINS", ic:"090915-03-0382", dorm:"2C7"},
+  {name:"NURUL AIN SOFEA BT. ROMZI", ic:"090712-03-0032", dorm:"2C8"},
+  {name:"NURUL IMAN BT. MOHD ROSLI", ic:"090614-06-0502", dorm:"2C8"},
+  {name:"AUNI NADZIRAH BT. MAZHAM", ic:"090605-03-0352", dorm:"2C8"},
+  {name:"NUR RASYIDAH BT. ABDULLAH", ic:"090123-03-0544", dorm:"2C8"},
+  {name:"SERI IFTI NUR QASIH BT. MOHD SANI", ic:"090917-03-0706", dorm:"2C8"},
+  {name:"WAN NUR SAIDATUL JANNAH BT. WAN MOHD RASYIDEE", ic:"091024-03-0172", dorm:"2C8"},
+  {name:"MARISSA ZULAIHA BT. MOHD ZAAIM", ic:"090728-03-0766", dorm:"2C8"},
+  {name:"NUR AFYAA BT. ZUHAIMI", ic:"090813-03-0146", dorm:"2C8"},
+  {name:"NUR SAZATUL SYARMILA BT. ZULKARNAN", ic:"090923-03-0542", dorm:"2C8"},
+  {name:"NUR INSYIRAH QAISARA BT. MOHD ZAMRI", ic:"090816-03-0168", dorm:"2C8"},
+  {name:"NADZIFAH BT. RUSLAN", ic:"091218-03-0680", dorm:"2C8"},
+  {name:"NUR SYASYA IZZATI BT. AHMAD ZAINUDDIN", ic:"090712-03-0972", dorm:"2C8"},
+  {name:"INTAN ASYA SOFEA BT. MOHD IZWAN", ic:"090731-02-0294", dorm:"1D1/2D8"},
+  {name:"WAN NURIN BATRISYA BT. WAN ROSZIMAN", ic:"090513-03-0726", dorm:"1D1"},
+  {name:"NURUL IMAN AMANIE BT. CHE HUSSIN", ic:"091215-03-0634", dorm:"1D1"},
+  {name:"NUR SOLEHA IMTSAL BT. ZAINAL", ic:"090506-03-0760", dorm:"1D1"},
+  {name:"NURUL SYAFIQAH DAMIA BT. MOHD NIZAM", ic:"090708-03-0144", dorm:"1D1"},
+  {name:"NUR HASNITA ANIESHA BT. SITMAL", ic:"090111-03-0466", dorm:"1D1"},
+  {name:"AKALILI AISYAH AULIA BT. AZAHARI", ic:"090219-03-0346", dorm:"1D1"},
+  {name:"NIK AWADIAE BT. NIK AZMAN", ic:"090120-03-1074", dorm:"1D1"},
+  {name:"NIK NUR AQILAH BT. NIK ZAKI", ic:"091203-03-0514", dorm:"1D1"},
+  {name:"NIK 'AISYAH HUMAIRA BT. CHE AHMAD JAUHARI", ic:"090318-03-0122", dorm:"1D1"}
+];
+if(!studentDormDB.length){
+  studentDormDB = defaultDormSeed;
+  LS.setItem('studentDormDB', JSON.stringify(studentDormDB));
+}
+
+/* -------------------------
+   Config (passwords)
+   ------------------------- */
+const STUDENT_PASS = '12345';
+const ADMIN_ACCOUNTS = {
+  admin: { pass:'12345', role:'Pentadbir' },
+  jaksa: { pass:'12345', role:'Jaksa' },
+  'ketua dorm': { pass:'12345', role:'Ketua Dorm' },
+  warden: { pass:'12345', role:'Warden' },
+  'pihak pengurusan asrama': { pass:'12345', role:'Pengurusan Asrama' }
+};
+
+/* -------------------------
+   Storage init
+   ------------------------- */
+if(!LS.getItem("aduanList")) LS.setItem("aduanList", JSON.stringify([]));
+let aduanList = JSON.parse(LS.getItem("aduanList") || '[]');
+let aduanListChanged = false;
+aduanList = aduanList.map(a=>{
+  if(a && a.meal_type === 'Makan Petang'){
+    aduanListChanged = true;
+    return {...a, meal_type: 'Makan Malam'};
+  }
+  return a;
+});
+if(aduanListChanged){
+  LS.setItem("aduanList", JSON.stringify(aduanList));
+}
+let isAdmin = false;
+let adminRole = '';
+if(!LS.getItem("customStudents")) LS.setItem("customStudents", JSON.stringify([]));
+let customStudents = JSON.parse(LS.getItem("customStudents") || '[]');
+customStudents = customStudents.filter(s=>normalizeIc(s.ic).length === 12);
+LS.setItem("customStudents", JSON.stringify(customStudents));
+
+/* -------------------------
+   Utility helpers
+   ------------------------- */
+function safeGet(id){ return document.getElementById(id) || null; }
+function showSection(id){
+  // require pelajar login to open pelajar
+  if(id === 'pelajar' || id === 'senarai'){
+    const s = SS.getItem("student_logged");
+    if(!s){
+      alert("Sila log masuk sebagai pelajar dahulu!");
+      id = "home";
+    }
+  }
+
+  // require admin login to open admin
+  if(id === 'admin' && !isAdmin){
+    alert("Sila log masuk sebagai admin dahulu!");
+    id = "home";
+  }
+
+  ['home','pelajar','senarai','admin','menu'].forEach(k=>{
+    const el = safeGet(k);
+    if(!el) return;
+    el.style.display = (k===id) ? 'block' : 'none';
+  });
+
+  // nav active state
+  document.querySelectorAll('nav.top-nav button[data-target]').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.target === id);
+  });
+
+  // show analytics only for admin logged
+  const analytics = document.querySelector('.admin-analytics');
+  if(analytics) analytics.style.display = (id === 'admin' && isAdmin) ? 'block' : 'none';
+
+  if(id === 'admin' && isAdmin){ renderAdminList(); renderRatingAnalytics(); }
+}
+
+function saveCustomStudents(){
+  LS.setItem('customStudents', JSON.stringify(customStudents));
+}
+
+function normalizeIc(value){
+  return String(value || '').replace(/[^0-9]/g, '');
+}
+
+function findStudentRecord(identifier){
+  const id = normalizeIc(identifier);
+  if(!id) return null;
+  const custom = customStudents.find(s=>normalizeIc(s.ic) === id);
+  if(custom) return {...custom, ic: id, pass: custom.pass || STUDENT_PASS};
+  const dormRec = studentDormDB.find(s=>normalizeIc(s.ic) === id);
+  if(dormRec) return {...dormRec, ic: id, pass: STUDENT_PASS};
+  if(studentDB[id]) return { ic:id, name: studentDB[id], dorm:'', pass: STUDENT_PASS };
+  return null;
+}
+
+function renderCustomStudentList(){
+  const target = safeGet('firstTimeList');
+  const adminTarget = safeGet('firstTimeAdminList');
+  if(!target && !adminTarget) return;
+  if(target) target.style.display = 'none';
+  if(!isAdmin){
+    if(adminTarget) adminTarget.style.display = 'none';
+    return;
+  }
+  if(adminTarget) adminTarget.style.display = 'block';
+  const searchTerm = (safeGet('firstTimeAdminSearch')?.value || '').toLowerCase().trim();
+  const filtered = searchTerm
+    ? customStudents.filter(s=>{
+        const blob = `${s.name||''} ${s.ic||''}`.toLowerCase();
+        return blob.includes(searchTerm);
+      })
+    : customStudents;
+  if(!filtered.length){
+    if(adminTarget) adminTarget.innerHTML = '<p class="small">Tiada pendaftaran baharu.</p>';
+    return;
+  }
+  const tableHtml = `<table>
+    <tr><th>#</th><th>Nama</th><th>IC</th><th>Dorm</th></tr>
+    ${filtered.map((s,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${s.name}</td>
+        <td>${s.ic}</td>
+        <td>${s.dorm||''}</td>
+      </tr>
+    `).join('')}
+  </table>`;
+  if(adminTarget) adminTarget.innerHTML = tableHtml;
+}
+
+function clearCustomStudents(){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  if(!customStudents.length){ alert('Tiada pendaftaran baharu.'); return; }
+  if(!confirm('Padam semua pendaftaran baharu?')) return;
+  customStudents = [];
+  saveCustomStudents();
+  renderCustomStudentList();
+}
+
+function setDefaultFirstTimePass(){
+  const passEl = safeGet('firstTime_pass');
+  if(passEl && !passEl.value) passEl.value = STUDENT_PASS;
+}
+
+/* -------------------------
+   Auto-redirect on load if session exists
+   ------------------------- */
+function autoRedirectIfLogged(){
+  try{
+    const adminFlag = SS.getItem('isAdmin');
+    if(adminFlag === 'true'){
+      isAdmin = true;
+      adminRole = SS.getItem('adminRole') || 'Admin';
+      setRoleUI('admin');
+      renderCustomStudentList();
+      showSection('admin');
+      return;
+    }
+    const s = JSON.parse(SS.getItem('student_logged') || 'null');
+    if(s){
+      setRoleUI('pelajar');
+      applyStudentSession();
+      showSection('pelajar');
+    } else {
+      showSection('home');
+    }
+  }catch(e){
+    console.warn('autoRedirectIfLogged error', e);
+    showSection('home');
+  }
+}
+
+/* -------------------------
+   Login gabungan Pelajar / Admin
+   ------------------------- */
+const roleToggleLabels = Array.from(document.querySelectorAll('#roleToggle label'));
+function getSelectedRole(){
+  const checked = document.querySelector('input[name="login_role"]:checked');
+  return checked ? checked.value : 'pelajar';
+}
+function setRoleUI(role){
+  roleToggleLabels.forEach(l=> l.classList.toggle('active', l.dataset.role === role));
+  const idLabel = safeGet('identifierLabel');
+  const idInput = safeGet('login_identifier');
+  if(role === 'admin'){
+    if(idLabel) idLabel.firstChild.nodeValue = 'Username Admin';
+    if(idInput){ idInput.placeholder = ''; }
+  } else {
+    if(idLabel) idLabel.firstChild.nodeValue = 'No Kad Pengenalan';
+    if(idInput){ idInput.placeholder = ''; }
+  }
+}
+roleToggleLabels.forEach(label=>{
+  label.addEventListener('click', ()=>{
+    const input = label.querySelector('input');
+    if(input){ input.checked = true; setRoleUI(input.value); }
+  });
+});
+
+const firstTimeForm = safeGet('firstTimeForm');
+if(firstTimeForm){
+  firstTimeForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const name = (safeGet('firstTime_name')?.value || '').trim();
+    const icRaw = (safeGet('firstTime_ic')?.value || '').trim();
+    const ic = normalizeIc(icRaw);
+    const dorm = (safeGet('firstTime_dorm')?.value || '').trim();
+    const pass = (safeGet('firstTime_pass')?.value || '').trim() || STUDENT_PASS;
+    const msg = safeGet('firstTimeMsg');
+    if(msg) msg.innerText = '';
+    if(!name || !ic){ if(msg) msg.innerText = 'Sila isi nama dan IC (nombor sahaja).'; return; }
+    if(ic.length !== 12){ if(msg) msg.innerText = 'IC mesti 12 angka.'; return; }
+    if(findStudentRecord(ic)){ if(msg) msg.innerText = 'IC sudah wujud. Teruskan login.'; return; }
+    customStudents.unshift({name, ic, dorm, pass});
+    saveCustomStudents();
+    if(msg) msg.innerText = 'Pendaftaran berjaya. Login guna IC & kata laluan ini.';
+    firstTimeForm.reset();
+    setDefaultFirstTimePass();
+    renderCustomStudentList();
+  });
+}
+
+
+const unifiedLoginForm = safeGet('unifiedLogin');
+if(unifiedLoginForm){
+  unifiedLoginForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const role = getSelectedRole();
+    const identifier = (safeGet('login_identifier')?.value || '').trim();
+    const password = safeGet('login_password')?.value || '';
+    const msg = safeGet('loginMsg');
+    if(msg) msg.innerText = '';
+    if(!identifier || !password){ if(msg) msg.innerText = 'Sila isi maklumat login.'; return; }
+
+    if(role === 'admin'){
+      const account = ADMIN_ACCOUNTS[identifier.toLowerCase()] || null;
+      if(account && password === account.pass){
+        isAdmin = true;
+        adminRole = account.role || 'Admin';
+        SS.setItem('isAdmin','true');
+        SS.setItem('adminRole', adminRole);
+        if(msg) msg.innerText = 'Login admin berjaya.';
+        const analytics = document.querySelector('.admin-analytics'); if(analytics) analytics.style.display = 'block';
+        renderCustomStudentList();
+        renderAdminList(); renderRatingAnalytics(); showSection('admin');
+      } else {
+        if(msg) msg.innerText = 'Username atau password admin salah.';
+      }
+      return;
+    }
+
+    const normalizedId = normalizeIc(identifier);
+    const student = findStudentRecord(normalizedId);
+    if(student && password === (student.pass || STUDENT_PASS)){
+      SS.setItem('student_logged', JSON.stringify({ic: normalizedId, name: student.name, dorm: student.dorm || ''}));
+      if(msg) msg.innerText = 'Login pelajar berjaya.';
+      applyStudentSession();
+      showSection('pelajar');
+    } else {
+      if(msg) msg.innerText = 'IC tidak ditemui atau kata laluan salah.';
+    }
+  });
+}
+
+function adminLogout(){
+  isAdmin = false;
+  adminRole = '';
+  SS.removeItem('isAdmin');
+  SS.removeItem('adminRole');
+  const analytics = document.querySelector('.admin-analytics'); if(analytics) analytics.style.display = 'none';
+  const msg = safeGet('loginMsg');
+  if(msg) msg.innerText = 'Admin logout.';
+  renderCustomStudentList();
+  showSection('home');
+}
+
+/* -------------------------
+   Apply student session to pelajar form
+   ------------------------- */
+function applyStudentSession(){
+  const s = JSON.parse(SS.getItem('student_logged') || 'null');
+  const nameEl = safeGet('name');
+  const icEl = safeGet('ic_display');
+  const statusEl = safeGet('statusMsg');
+  const dormEl = safeGet('dorm');
+  if(s){
+    if(nameEl){ nameEl.value = s.name; nameEl.disabled = true; }
+    if(icEl){ icEl.value = s.ic; icEl.disabled = true; }
+    if(dormEl){ dormEl.value = s.dorm || ''; }
+    if(statusEl) statusEl.innerText = 'Anda log masuk sebagai pelajar: ' + s.name;
+  } else {
+    if(nameEl) { nameEl.value = ''; nameEl.disabled = false; }
+    if(icEl) { icEl.value = ''; icEl.disabled = true; }
+    if(dormEl){ dormEl.value = ''; }
+    if(statusEl) statusEl.innerText = 'Sila log masuk sebagai pelajar sebelum hantar aduan.';
+  }
+}
+
+function studentLogout(){
+  SS.removeItem('student_logged');
+  applyStudentSession();
+  const hm = safeGet('loginMsg');
+  if(hm) hm.innerText = 'Anda telah logout.';
+  showSection('home');
+}
+
+/* -------------------------
+   Complaint submit
+   ------------------------- */
+const complaintForm = safeGet('complaintForm');
+if(complaintForm){
+  complaintForm.addEventListener('submit', e=>{
+    e.preventDefault();
+    const session = JSON.parse(SS.getItem('student_logged') || 'null');
+    if(!session){ alert('Sila log masuk sebagai pelajar dahulu.'); showSection('home'); return; }
+
+    const fileInput = safeGet('image');
+    const file = fileInput?.files?.[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = function(){ saveAduan(reader.result); };
+      reader.onerror = function(){ saveAduan(null); };
+      reader.readAsDataURL(file);
+    } else saveAduan(null);
+  });
+}
+
+function saveAduan(imageData){
+  const session = JSON.parse(SS.getItem('student_logged') || 'null');
+  const obj = {
+    name: session?.name || (safeGet('name')?.value || 'Anon'),
+    ic: session?.ic || (safeGet('ic_display')?.value || ''),
+    dorm: safeGet('dorm')?.value || '',
+    meal_type: safeGet('meal_type')?.value || '',
+    rating: parseInt(safeGet('rating')?.value) || 0,
+    message: safeGet('message')?.value || '',
+    date: new Date().toLocaleString(),
+    ts: Date.now(),
+    status: 'Baru',
+    image: imageData,
+    remark: ''
+  };
+  aduanList.unshift(obj);
+  LS.setItem('aduanList', JSON.stringify(aduanList));
+  if(safeGet('statusMsg')) safeGet('statusMsg').innerText = 'Aduan dihantar.';
+  if(complaintForm) complaintForm.reset();
+  applyStudentSession();
+  renderComplaints();
+  renderAdminList();
+  renderRatingAnalytics();
+  renderStatusCounts();
+}
+
+/* -------------------------
+   Render complaints (pelajar view)
+   ------------------------- */
+function renderComplaints(){
+  const container = safeGet('complaintsList');
+  if(!container) return;
+  if(!aduanList.length){ container.innerHTML = '<p>Tiada aduan lagi.</p>'; return; }
+  const data = getStudentFilteredAduan();
+  if(!data.length){ container.innerHTML = '<p>Tiada aduan sepadan dengan penapis.</p>'; renderStudentStats([]); return; }
+  container.innerHTML = data.map((c,i)=>`
+    <div class="complaint">
+      <div class="small">#${i+1} | ${c.date}</div>
+      <div><strong>${c.name || 'Anon'}</strong> <span class="small">| ${c.dorm||''}</span></div>
+      <div class="small">${c.meal_type} | Rating: ${c.rating} | <span class="status-pill ${c.status}">${c.status}</span></div>
+      <div>${c.message || ''}</div>
+      ${c.remark ? `<div class="small" style="margin-top:6px;"><strong>Catatan Admin:</strong> ${c.remark}</div>` : ''}
+      ${c.image ? `<div style="margin-top:8px"><img src="${c.image}" style="max-width:220px;border-radius:8px;border:1px solid var(--border);"></div>` : ''}
+    </div>
+  `).join('');
+  renderStudentStats(data);
+}
+
+/* -------------------------
+   Status counts (admin cards)
+   ------------------------- */
+function renderStatusCounts(){
+  const counts = {Baru:0, DalamProses:0, Selesai:0};
+  aduanList.forEach(c=>{
+    if(counts[c.status] !== undefined){ counts[c.status]++; }
+  });
+  const setVal = (id, val)=>{ const el = safeGet(id); if(el) el.innerText = val; };
+  setVal('countBaru', counts.Baru);
+  setVal('countDalamProses', counts.DalamProses);
+  setVal('countSelesai', counts.Selesai);
+  const total = aduanList.length || 0;
+  const pct = k => total ? Math.round((counts[k]/total)*100) : 0;
+  const setPct = (id, val)=>{ const el = safeGet(id); if(el) el.innerText = val + '%'; };
+  const setBar = (id, val)=>{ const el = safeGet(id); if(el) el.style.width = val + '%'; };
+  setPct('percBaru', pct('Baru')); setBar('progressBaru', pct('Baru'));
+  setPct('percDalamProses', pct('DalamProses')); setBar('progressDalamProses', pct('DalamProses'));
+  setPct('percSelesai', pct('Selesai')); setBar('progressSelesai', pct('Selesai'));
+}
+
+/* -------------------------
+   Filter helpers (admin)
+   ------------------------- */
+function getFilteredAduan(){
+  const term = (safeGet('adminSearch')?.value || '').toLowerCase().trim();
+  const statusVal = safeGet('adminStatusFilter')?.value || 'ALL';
+  const ratingVal = safeGet('adminRatingFilter')?.value || 'ALL';
+  const sortVal = safeGet('adminSort')?.value || 'latest';
+  const mealVal = safeGet('adminMealFilter')?.value || 'ALL';
+
+  let list = [...aduanList];
+  if(term){
+    list = list.filter(c=>{
+      const blob = `${c.name||''} ${c.ic||''} ${c.dorm||''} ${c.message||''}`.toLowerCase();
+      return blob.includes(term);
+    });
+  }
+  if(statusVal !== 'ALL'){
+    list = list.filter(c=>c.status === statusVal);
+  }
+  if(ratingVal !== 'ALL'){
+    list = list.filter(c=>{
+      const r = parseInt(c.rating)||0;
+      if(ratingVal === '4plus') return r>=4;
+      if(ratingVal === 'low') return r<=2;
+      if(ratingVal === 'exact5') return r===5;
+      return true;
+    });
+  }
+  if(mealVal !== 'ALL'){
+    list = list.filter(c=>c.meal_type === mealVal);
+  }
+
+  list.sort((a,b)=>{
+    const ta = a.ts || Date.parse(a.date) || 0;
+    const tb = b.ts || Date.parse(b.date) || 0;
+    if(sortVal === 'latest') return tb - ta;
+    if(sortVal === 'oldest') return ta - tb;
+    if(sortVal === 'high') return (b.rating||0) - (a.rating||0);
+    if(sortVal === 'low') return (a.rating||0) - (b.rating||0);
+    return 0;
+  });
+
+  return list;
+}
+
+function resetAdminFilters(){
+  const setVal = (id,val)=>{ const el = safeGet(id); if(el) el.value = val; };
+  setVal('adminSearch',''); setVal('adminStatusFilter','ALL'); setVal('adminRatingFilter','ALL'); setVal('adminMealFilter','ALL'); setVal('adminSort','latest');
+  renderAdminList();
+}
+
+function wireAdminFilters(){
+  ['adminSearch','adminStatusFilter','adminRatingFilter','adminMealFilter','adminSort'].forEach(id=>{
+    const el = safeGet(id);
+    if(el){
+      const evt = id === 'adminSearch' ? 'input' : 'change';
+      el.addEventListener(evt, ()=>renderAdminList());
+    }
+  });
+}
+
+function wireFirstTimeAdminSearch(){
+  const el = safeGet('firstTimeAdminSearch');
+  if(el){ el.addEventListener('input', ()=>renderCustomStudentList()); }
+}
+
+/* -------------------------
+   Eksport CSV
+   ------------------------- */
+function exportCsv(){
+  if(!aduanList.length){ alert('Tiada aduan untuk dieksport.'); return; }
+  const header = ['Nama','IC','Dorm','Waktu','Rating','Status','Tarikh','Aduan'];
+  const rows = aduanList.map(c=>[
+    (c.name||'').replace(/"/g,'""'),
+    (c.ic||'').replace(/"/g,'""'),
+    (c.dorm||'').replace(/"/g,'""'),
+    (c.meal_type||'').replace(/"/g,'""'),
+    c.rating||'',
+    c.status||'',
+    c.date||'',
+    (c.message||'').replace(/"/g,'""')
+  ]);
+  const csv = [header, ...rows].map(r=>`"${r.join('","')}"`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'aduan.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportJson(){
+  if(!aduanList.length){ alert('Tiada aduan untuk dieksport.'); return; }
+  const blob = new Blob([JSON.stringify(aduanList,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'aduan.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportPdf(){
+  const lib = window.jspdf || (window.jspdf && window.jspdf.default) || null;
+  const jsPDF = lib && lib.jsPDF ? lib.jsPDF : null;
+  if(!jsPDF){ alert('Perpustakaan PDF belum dimuat. Pastikan sambungan internet dibenarkan.'); return; }
+  let data = getFilteredAduan();
+  if(!data.length && aduanList.length){ data = [...aduanList]; } // fallback semua data
+  if(!data.length){ alert('Tiada aduan untuk dieksport.'); return; }
+
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const margin = 40;
+  let y = margin;
+  const counts = {Baru:0, DalamProses:0, Selesai:0};
+  data.forEach(c=>{ if(counts[c.status] !== undefined) counts[c.status]++; });
+
+  doc.setFontSize(14);
+  doc.text('Laporan Aduan Dewan Makan', margin, y); y += 18;
+  doc.setFontSize(10);
+  doc.text(`Bilangan rekod: ${data.length} | Baru: ${counts.Baru||0} | DalamProses: ${counts.DalamProses||0} | Selesai: ${counts.Selesai||0}`, margin, y);
+  y += 16;
+
+  data.forEach((c, idx)=>{
+    if(y > 760){ doc.addPage(); y = margin; }
+    doc.setFont(undefined, 'bold');
+    doc.text(`#${idx+1} | ${c.date || ''}`, margin, y); y += 12;
+    doc.setFont(undefined, 'normal');
+    const block = [
+      `Nama: ${c.name||''} (${c.ic||''})`,
+      `Dorm: ${c.dorm||''} | Waktu: ${c.meal_type||''} | Rating: ${c.rating||'-'}`,
+      `Status: ${c.status||''}`,
+      `Aduan: ${c.message||''}`,
+      c.remark ? `Catatan: ${c.remark}` : ''
+    ].filter(Boolean);
+    block.forEach(line=>{
+      const lines = doc.splitTextToSize(line, 500);
+      lines.forEach(txt=>{ doc.text(txt, margin, y); y += 12; });
+    });
+    y += 10;
+  });
+  doc.save('aduan.pdf');
+}
+
+function handleAdminAction(val){
+  const select = safeGet('adminActionSelect');
+  const reset = ()=>{ if(select) select.value=''; };
+  switch(val){
+    case 'export_csv': exportCsv(); reset(); break;
+    case 'export_json': exportJson(); reset(); break;
+    case 'export_pdf': exportPdf(); reset(); break;
+    case 'seed_demo': seedMonthData(); reset(); break;
+    case 'bulk_process': bulkProcess(); reset(); break;
+    case 'bulk_delete': bulkDeleteSelesai(); reset(); break;
+    default: break;
+  }
+}
+
+function importStudents(){
+  const ta = safeGet('studentImport');
+  const msg = safeGet('studentImportMsg');
+  if(msg) msg.innerText = '';
+  if(!ta || !ta.value.trim()){ if(msg) msg.innerText = 'Tiada data untuk diimport.'; return; }
+  const lines = ta.value.trim().split(/\r?\n/);
+  let added=0, updated=0;
+  lines.forEach(line=>{
+    const parts = line.split(';').map(s=>s.trim()).filter(Boolean);
+    if(parts.length < 3) return;
+    const [name, ic, dorm] = parts;
+    const idx = studentDormDB.findIndex(s=>s.ic === ic);
+    if(idx >= 0){ studentDormDB[idx] = {name, ic, dorm}; updated++; }
+    else { studentDormDB.push({name, ic, dorm}); added++; }
+  });
+  LS.setItem('studentDormDB', JSON.stringify(studentDormDB));
+  if(msg) msg.innerText = `Berjaya import. Ditambah: ${added}, Dikemas kini: ${updated}.`;
+  ta.value = '';
+}
+
+function openImageViewerByIndex(i){
+  const rec = aduanList[i];
+  if(rec?.image){ openImageViewer(rec.image); }
+}
+function openImageViewer(src){
+  const modal = safeGet('imageModal');
+  const img = safeGet('modalImage');
+  if(modal && img && src){
+    img.src = src;
+    modal.style.display = 'flex';
+  }
+}
+function closeImageViewer(e){
+  if(e){ e.stopPropagation(); }
+  const modal = safeGet('imageModal');
+  const img = safeGet('modalImage');
+  if(modal){ modal.style.display = 'none'; }
+  if(img){ img.src = ''; }
+}
+
+/* -------------------------
+   Admin list rendering
+   ------------------------- */
+function renderAdminList(){
+  const container = safeGet('adminList');
+  if(!container) return;
+  if(!aduanList.length){ container.innerHTML = '<p>Tiada aduan.</p>'; renderStatusCounts(); return; }
+
+  const data = getFilteredAduan();
+  if(!data.length){ container.innerHTML = '<p>Tiada aduan sepadan dengan penapis.</p>'; renderStatusCounts(); return; }
+  container.innerHTML = `<table>
+    <tr><th>#</th><th>Nama</th><th>IC</th><th>Dorm</th><th>Tarikh</th><th>Waktu</th><th>Rating</th><th>Aduan</th><th>Catatan</th><th>Gambar</th><th>Status</th><th>Tindakan</th></tr>
+    ${data.map((c,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${c.name||''}</td>
+        <td>${c.ic||''}</td>
+        <td>${c.dorm||''}</td>
+        <td>${c.date}</td>
+        <td>${c.meal_type}</td>
+        <td>${formatRatingWithDesc(c.rating)}</td>
+        <td style="max-width:220px; word-wrap:break-word;">${c.message||''}</td>
+        <td style="max-width:180px; word-wrap:break-word;">${c.remark||'-'}</td>
+        <td>${c.image ? `<div style="display:flex; flex-direction:column; gap:6px; align-items:flex-start;"><button class="btn-ghost small" onclick="openImageViewerByIndex(${aduanList.indexOf(c)})">Lihat</button><img src="${c.image}" onclick="openImageViewerByIndex(${aduanList.indexOf(c)})" style="width:60px;border-radius:6px;border:1px solid var(--border); cursor:pointer;" alt="Lampiran"></div>` : '-'}</td>
+        <td><span class="status-pill ${c.status}">${c.status}</span></td>
+        <td>
+          ${isAdmin ? `<button class="small" onclick="editComplaint(${aduanList.indexOf(c)})">Edit</button>` : ''}
+          ${isAdmin ? `<button class="small" onclick="editRemark(${aduanList.indexOf(c)})">Catatan</button>` : ''}
+          <select onchange="updateStatus(${aduanList.indexOf(c)},this.value)">
+            <option value="Baru" ${c.status==='Baru'?'selected':''}>Baru</option>
+            <option value="DalamProses" ${c.status==='DalamProses'?'selected':''}>DalamProses</option>
+            <option value="Selesai" ${c.status==='Selesai'?'selected':''}>Selesai</option>
+          </select>
+          ${c.status==="Selesai" ? `<button class="delete small" onclick="deleteAduan(${aduanList.indexOf(c)})">Delete</button>` : ''}
+        </td>
+      </tr>
+    `).join('')}
+  </table>`;
+
+  renderStatusCounts();
+}
+
+/* -------------------------
+   Update status
+   ------------------------- */
+function updateStatus(i,v){
+  if(aduanList[i]){
+    aduanList[i].status = v;
+    LS.setItem('aduanList', JSON.stringify(aduanList));
+    renderComplaints(); renderAdminList(); renderRatingAnalytics(); renderStatusCounts();
+  }
+}
+
+/* -------------------------
+   Edit complaint (admin)
+   ------------------------- */
+function editComplaint(i){
+  if(!isAdmin){ alert('Hanya admin boleh edit!'); return; }
+  const c = aduanList[i];
+  if(!c) return;
+  const newName = prompt('Nama:', c.name); if(newName===null) return;
+  const newDorm = prompt('Dorm:', c.dorm); if(newDorm===null) return;
+  const newMeal = prompt('Waktu Makan:', c.meal_type); if(newMeal===null) return;
+  const newRating = prompt('Rating (1-5):', c.rating); if(newRating===null) return;
+  const newMessage = prompt('Aduan:', c.message); if(newMessage===null) return;
+
+  aduanList[i] = {...c, name:newName, dorm:newDorm, meal_type:newMeal, rating:parseInt(newRating)||c.rating, message:newMessage};
+  LS.setItem('aduanList', JSON.stringify(aduanList));
+  renderComplaints(); renderAdminList(); renderRatingAnalytics();
+}
+
+function editRemark(i){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  const c = aduanList[i]; if(!c) return;
+  const r = prompt('Catatan/Nota admin:', c.remark || '');
+  if(r === null) return;
+  aduanList[i].remark = r;
+  LS.setItem('aduanList', JSON.stringify(aduanList));
+  renderAdminList();
+}
+
+/* -------------------------
+   Delete complaint (only when Selesai)
+   ------------------------- */
+function deleteAduan(i){
+  if(!aduanList[i]) return;
+  if(aduanList[i].status !== 'Selesai'){ alert("Hanya aduan yang telah 'Selesai' boleh dipadam."); return; }
+  if(confirm('Padam aduan ini?')){ aduanList.splice(i,1); LS.setItem('aduanList', JSON.stringify(aduanList)); renderComplaints(); renderAdminList(); renderRatingAnalytics(); renderStatusCounts(); }
+}
+
+/* -------------------------
+   Seed 30 days demo data
+   ------------------------- */
+function seedMonthData(){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  const existing = aduanList.filter(a=>a.seedDemo).length;
+  if(existing && !confirm('Data demo sudah ada ('+existing+'). Tambah lagi?')) return;
+  if(!confirm('Tambah 30 hari data demo ke dalam senarai aduan?')) return;
+
+  const names = ['Ali', 'Fatimah', 'Aiman', 'Siti', 'Danial', 'Amira', 'Arif', 'Nadia', 'Hafiz', 'Zara'];
+  const dorms = ['D1','D2','D3','B1','B2','C1','C2'];
+  const meals = ['Sarapan','Makan Tengahari','Kudapan Petang','Makan Malam','Kudapan Malam'];
+  const statuses = ['Baru','DalamProses','Selesai'];
+  const messages = [
+    'Makanan kurang panas, mohon dipertingkat.',
+    'Portion sedikit, ramai tidak cukup.',
+    'Rasa masin, sila seimbangkan perasa.',
+    'Kuah hampir habis, perlu top up.',
+    'Buah kurang segar hari ini.',
+    'Minuman terlalu manis, mohon kurangkan gula.',
+    'Sila pastikan barisan teratur.'
+  ];
+
+  let added = 0;
+  for(let i=0;i<30;i++){
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const obj = {
+      name: names[i % names.length],
+      ic: 'DEMO' + String(i+1).padStart(4,'0'),
+      dorm: dorms[i % dorms.length],
+      meal_type: meals[i % meals.length],
+      rating: 1 + (i % 5),
+      message: messages[i % messages.length],
+      date: d.toLocaleString(),
+      ts: d.getTime(),
+      status: statuses[i % statuses.length],
+      image: null,
+      remark: '',
+      seedDemo: true
+    };
+    aduanList.unshift(obj);
+    added++;
+  }
+
+  LS.setItem('aduanList', JSON.stringify(aduanList));
+  renderComplaints(); renderAdminList(); renderRatingAnalytics(); renderStatusCounts();
+  alert(added + ' rekod demo ditambah.');
+}
+
+/* -------------------------
+   Bulk actions
+   ------------------------- */
+function bulkProcess(){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  let changed = 0;
+  aduanList = aduanList.map(a=>{
+    if(a.status === 'Baru'){ changed++; return {...a, status:'DalamProses'}; }
+    return a;
+  });
+  if(changed){ LS.setItem('aduanList', JSON.stringify(aduanList)); renderComplaints(); renderAdminList(); renderRatingAnalytics(); renderStatusCounts(); }
+  alert(changed ? `${changed} aduan ditandakan DalamProses.` : 'Tiada aduan status Baru.');
+}
+
+function bulkDeleteSelesai(){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  const count = aduanList.filter(a=>a.status === 'Selesai').length;
+  if(!count){ alert('Tiada aduan Selesai.'); return; }
+  if(confirm(`Padam ${count} aduan berstatus Selesai?`)){
+    aduanList = aduanList.filter(a=>a.status !== 'Selesai');
+    LS.setItem('aduanList', JSON.stringify(aduanList));
+    renderComplaints(); renderAdminList(); renderRatingAnalytics(); renderStatusCounts();
+  }
+}
+
+/* -------------------------
+   Menu storage & rendering
+   ------------------------- */
+const weekDaysOrder = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+const defaultMenu = {
+  "Ahad":{Pagi:[{name:"Nasi ikan masak lemak & air masak"}],Tengahari:[{name:"Nasi ayam gulai & air masak"}],Petang:[{name:"Roti kacang & air milo"}],KudapanMalam:[{name:"Biskut + Milo"}],Malam:[]},
+  "Isnin":{Pagi:[{ name: "Bihun Soto + Minuman Bermalta" }],Tengahari:[{ name: "Nasi Putih + Ikan Tenggiri Asam Pedas + Sayur + Oren" }],Petang:[{ name: "Karipap Daging (2) + Kopi O" }],KudapanMalam:[{name:"Buah + Susu"}],Malam:[{ name: "Nasi Tomato + Ayam Goreng Rempah + Dalca + Tembikai" }]},
+  "Selasa":{Pagi:[{name:"Mee goreng & air sirap"}],Tengahari:[{name:"Ayam masak merah & nasi putih"}],Petang:[{name:"Roti bakar & air coklat"}],KudapanMalam:[{name:"Roti + Susu"}],Malam:[]},
+  "Rabu":{Pagi:[{name:"Bubur ayam & air masak"}],Tengahari:[{name:"Ikan goreng sambal & sayur campur"}],Petang:[{name:"Kuih muih & teh O"}],KudapanMalam:[{name:"Biskut + Air Masak"}],Malam:[]},
+  "Khamis":{Pagi:[{name:"Nasi minyak & ayam masak kurma"}],Tengahari:[{name:"Mee sup & air masak"}],Petang:[{name:"Roti sandwich & air milo"}],KudapanMalam:[{name:"Buah + Air Masak"}],Malam:[]},
+  "Jumaat":{Pagi:[{name:"Nasi goreng kampung & air masak"}],Tengahari:[{name:"Ayam kicap & nasi putih"}],Petang:[{name:"Karipap & teh tarik"}],KudapanMalam:[{name:"Milo panas + roti"}],Malam:[]},
+  "Sabtu":{Pagi:[{name:"Roti canai & teh tarik"}],Tengahari:[{name:"Laksa & air sirap"}],Petang:[{name:"Biskut & air milo"}],KudapanMalam:[{name:"Air masak + buah"}],Malam:[]}
+};
+const weeklyMenuSamples = {
+  Isnin: [
+    {
+      Sarapan: ['Roti Canai (40g / 280 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Rendang Daging (80g / 210 kcal)', 'Keledek Goreng (2 potong / 90 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ikan Siakap 3 Rasa (130g / 170 kcal)', 'Kacang Panjang Goreng (40g / 50 kcal)', 'Pisang Berangan (130g / 90 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Roti Bujur Panjang (2 keping / 90 kcal)', 'Telur (40g / 60 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Ayam Masak Kari (125g / 210 kcal)', 'Buncis + Taugeh + Lobak Merah Goreng (80g / 70 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ayam Goreng (150g / 200 kcal)', 'Tahu (10g / 10 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ],
+  Selasa: [
+    {
+      Sarapan: ['Telur Dadar (65g / 210 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Ayam Masak Kicap (125g / 200 kcal)', 'Kubis Goreng (80g / 90 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Sup Ayam (150g / 90 kcal)', 'Sayur (20g / 50 kcal)', 'Tehu (10g / 10 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Nasi Goreng (200g / 280 kcal)', 'Telur Dadar (60g / 210 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Ikan Tenggiri Masak Lemak (80g / 110 kcal)', 'Kacang Panjang (20g / 30 kcal)', 'Bayam Goreng (60g / 70 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Sup Ayam (150ml / 85 kcal)', 'Sayur (20g / 30 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ],
+  Rabu: [
+    {
+      Sarapan: ['Roti Bujur Panjang (2 keping / 90 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Sotong Goreng Kunyit (80g / 80 kcal)', 'Sayur (50g / 50 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ayam Masak Halia (125g / 200 kcal)', 'Tahu (10g / 10 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Roti Bujur Panjang (2 keping / 90 kcal)', 'Telur Dadar (60g / 210 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Daging Masak Kurma (80g / 100 kcal)', 'Lobak Merah (20g / 20 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ikan Siakap 3 Rasa (130g / 170 kcal)', 'Kacang Panjang (40g / 50 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ],
+  Khamis: [
+    {
+      Sarapan: ['Nasi Putih (200g / 260 kcal)', 'Daging Paprik (80g / 100 kcal)', 'Kacang Panjang (20g / 40 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Ayam Goreng (150g / 300 kcal)', 'Sayur (20g / 40 kcal)', 'Tahu (10g / 10 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Roti Bujur Panjang (2 keping / 90 kcal)', 'Telur Dadar (65g / 210 kcal)', 'Sayur (50g / 50 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Kacang Panjang (40g / 50 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Ikan Tenggiri Masak Kicap (80g / 110 kcal)', 'Sayur (20g / 30 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Sup Ayam (150ml / 85 kcal)', 'Sayur (20g / 30 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ],
+  Jumaat: [
+    {
+      Sarapan: ['Nasi Putih (200g / 260 kcal)', 'Kari Ayam (150g / 270 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Ayam Goreng (150g / 200 kcal)', 'Tehu (10g / 10 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Sup Ayam (150g / 90 kcal)', 'Sayur (20g / 50 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Spaghetti Bolognese (180g / 380 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Ayam Goreng Berempah (150g / 200 kcal)', 'Kacang Panjang (40g / 50 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ikan Siakap (150g / 170 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ],
+  Sabtu: [
+    {
+      Sarapan: ['Nasi Goreng (200g / 360 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Ikan Siakap 3 Rasa (130g / 170 kcal)', 'Kacang Panjang Goreng (40g / 50 kcal)', 'Pisang Berangan (130g / 90 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ayam Goreng (150g / 200 kcal)', 'Tahu (10g / 10 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Roti Bujur Panjang (2 keping / 90 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Ayam Goreng Berempah (150g / 200 kcal)', 'Sayur (20g / 30 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Sup Ayam (150ml / 85 kcal)', 'Sayur (20g / 30 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ],
+  Ahad: [
+    {
+      Sarapan: ['Roti Canai (40g / 280 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Daging Paprik (80g / 100 kcal)', 'Kacang Panjang (20g / 40 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ikan Siakap 3 Rasa (130g / 170 kcal)', 'Kacang Panjang Goreng (40g / 50 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    },
+    {
+      Sarapan: ['Roti Bujur Panjang (2 keping / 90 kcal)', 'Nasi Lemak'],
+      Tengahari: ['Nasi Putih (200g / 260 kcal)', 'Ayam Masak Kicap (125g / 210 kcal)'],
+      Petang: ['Minuman Susu Berkhasiat (200ml / 160 kcal)'],
+      Malam: ['Ayam Goreng (150g / 200 kcal)'],
+      MinumMalam: ['Air Kosong (250ml / 0 kcal)']
+    }
+  ]
+};
+
+let weeklyMenuSeed = 202501;
+const weeklyMenuVersion = 2;
+
+function makeSeededRng(seed){
+  let s = seed >>> 0;
+  return function(){
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function buildWeeklyMenu(seed){
+  const rng = makeSeededRng(seed);
+  const weeks = [];
+  for(let w=1; w<=16; w++){
+    const days = weekDaysOrder.map(day=>{
+      const options = weeklyMenuSamples[day] || [];
+      if(!options.length) return {day, meals:{}};
+      const pick = Math.floor(rng() * options.length);
+      return {day, meals: options[pick]};
+    });
+    weeks.push({week:w, days});
+  }
+  return weeks;
+}
+
+function initWeeklyMenuStore(){
+  const storedVersion = parseInt(LS.getItem('weeklyMenuVersion') || '0', 10);
+  if(storedVersion !== weeklyMenuVersion){
+    const data = buildWeeklyMenu(weeklyMenuSeed);
+    LS.setItem('weeklyMenuData', JSON.stringify(data));
+    LS.setItem('weeklyMenuVersion', String(weeklyMenuVersion));
+  }
+}
+
+function getWeeklyMenuData(){
+  try{
+    const data = JSON.parse(LS.getItem('weeklyMenuData') || 'null');
+    return Array.isArray(data) && data.length ? data : buildWeeklyMenu(weeklyMenuSeed);
+  }catch(e){
+    return buildWeeklyMenu(weeklyMenuSeed);
+  }
+}
+
+function saveWeeklyMenuData(data){
+  LS.setItem('weeklyMenuData', JSON.stringify(data));
+}
+
+function renderWeeklyMenu(){
+  const target = safeGet('weeklyMenuList');
+  if(!target) return;
+  const weeks = getWeeklyMenuData();
+  const sortedWeeks = [...weeks].sort((a,b)=>(a.week||0)-(b.week||0));
+  target.innerHTML = '<div class="week-grid">' + sortedWeeks.map(week=>{
+    const sortedDays = [...(week.days || [])].sort((a,b)=>weekDaysOrder.indexOf(a.day)-weekDaysOrder.indexOf(b.day));
+    const daysHtml = sortedDays.map(d=>{
+      const blocks = [
+        renderMealBlock('Sarapan', d.meals.Sarapan),
+        renderMealBlock('Makan Tengahari', d.meals.Tengahari),
+        renderMealBlock('Kudapan Petang', d.meals.Petang),
+        renderMealBlock('Makan Malam', d.meals.Malam),
+        renderMealBlock('Kudapan Malam', d.meals.MinumMalam)
+      ].filter(Boolean).join('');
+      return `<div class="week-day"><h4>${escapeHtml(d.day)}</h4><div class="meal-columns">${blocks}</div></div>`;
+    }).join('');
+    return `<details class="week-card"><summary>Minggu ${week.week}</summary><div class="week-days">${daysHtml}</div></details>`;
+  }).join('') + '</div>';
+}
+
+function renderMealBlock(label, items){
+  const arr = items || [];
+  if(!arr.length) return '';
+  const itemsHtml = arr.map(it=>`<li>${escapeHtml(it)}</li>`).join('');
+  return `<div class="meal-block"><div class="meal-title">${label}</div><ul>${itemsHtml}</ul></div>`;
+}
+
+function rerollWeeklyMenu(){
+  weeklyMenuSeed = Math.floor(Date.now() % 1000000000);
+  const data = buildWeeklyMenu(weeklyMenuSeed);
+  saveWeeklyMenuData(data);
+  renderWeeklyMenu();
+  renderWeeklyMenuAdminList();
+}
+
+function initMenuStore(){
+  if(!LS.getItem('menuData')){
+    LS.setItem('menuData', JSON.stringify(defaultMenu));
+  }
+}
+
+function getMenuData(){
+  try{
+    const data = JSON.parse(LS.getItem('menuData') || 'null') || defaultMenu;
+    // ensure KudapanMalam slot exists
+    Object.keys(defaultMenu).forEach(day=>{
+      if(!data[day]) data[day] = JSON.parse(JSON.stringify(defaultMenu[day]));
+      ['KudapanMalam'].forEach(slot=>{
+        if(!data[day][slot]) data[day][slot] = [];
+      });
+    });
+    return data;
+  }catch(e){
+    return defaultMenu;
+  }
+}
+
+function saveMenuData(data){
+  LS.setItem('menuData', JSON.stringify(data));
+}
+
+function renderMenu(){
+  const menuData = getMenuData();
+  const container = safeGet('menuList');
+  if(!container) return;
+
+  const term = (safeGet('menuSearch')?.value || '').toLowerCase().trim();
+
+  container.innerHTML = '<div class="menu-grid">' + weekDaysOrder.filter(day=>menuData[day]).map(day=>{
+    const dayData = menuData[day] || {};
+    const dayBlob = day.toLowerCase();
+    const blocksArr = [];
+    const slotOrder = ['Pagi','Tengahari','Petang','KudapanMalam','Malam'];
+    slotOrder.forEach(slot=>{
+      const label = slot === 'KudapanMalam' ? 'Kudapan Malam' : slot;
+      const itemsArr = (dayData[slot]||[]);
+      if(itemsArr.length){
+        const match = term ? itemsArr.some(it=>String(it.name||'').toLowerCase().includes(term)) : true;
+        if(term && !match && !dayBlob.includes(term)) return;
+        const items = itemsArr.map(it=>`<li>${escapeHtml(it.name)}</li>`).join('') || '<li>-</li>';
+        blocksArr.push(`<div class="meal-block"><div class="meal-title">${label}</div><ul>${items}</ul></div>`);
+      }
+    });
+    if(term && blocksArr.length===0 && !dayBlob.includes(term)) return '';
+    const blocks = blocksArr.join('') || '<p class="small">Tiada menu</p>';
+    return `<div class="menu-day" id="menu-${escapeHtml(day)}"><h3>${escapeHtml(day)}</h3><div class="meal-columns">${blocks}</div></div>`;
+  }).filter(Boolean).join('') + '</div>';
+
+  renderWeeklyMenuAdminList();
+}
+
+/* simple escaping */
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'})[m]; }); }
+
+/* categorize menu items to Pagi/Tengahari/Petang/Malam */
+function categorizeMeals(items){
+  const buckets = {Pagi:[], Tengahari:[], Petang:[], Malam:[]};
+  items.forEach(it=>{
+    const n = String(it.name||'').toLowerCase();
+    if(n.includes('sarapan')) buckets.Pagi.push(it);
+    else if(n.includes('tengah hari') || n.includes('tengahari') || n.includes('tengah-hari')) buckets.Tengahari.push(it);
+    else if(n.includes('petang') || n.includes('kudapan')) buckets.Petang.push(it);
+    else if(n.includes('malam')) buckets.Malam.push(it);
+    else buckets.Tengahari.push(it);
+  });
+  return buckets;
+}
+
+function resetMenuSearch(){
+  const el = safeGet('menuSearch'); if(el) el.value = '';
+  renderMenu();
+}
+
+function jumpToday(){
+  const daysMap = ['Ahad','Isnin','Selasa','Rabu','Khamis','Jumaat','Sabtu'];
+  const today = daysMap[new Date().getDay()];
+  const target = document.getElementById('menu-' + today);
+  if(target){ target.scrollIntoView({behavior:'smooth', block:'start'}); }
+}
+
+function renderWeeklyMenuAdminList(){
+  const target = safeGet('weeklyMenuAdminList');
+  if(!target) return;
+  const data = getWeeklyMenuData();
+  const slots = [
+    {key:'Sarapan', label:'Sarapan'},
+    {key:'Tengahari', label:'Makan Tengahari'},
+    {key:'Petang', label:'Kudapan Petang'},
+    {key:'Malam', label:'Makan Malam'},
+    {key:'MinumMalam', label:'Kudapan Malam'}
+  ];
+
+  const sortedWeeks = [...data].sort((a,b)=>(a.week||0)-(b.week||0));
+  target.innerHTML = sortedWeeks.map(week=>{
+    const sortedDays = [...(week.days || [])].sort((a,b)=>weekDaysOrder.indexOf(a.day)-weekDaysOrder.indexOf(b.day));
+    const daysHtml = sortedDays.map(dayObj=>{
+      const blocks = slots.map(slot=>{
+        const itemsArr = (dayObj.meals && dayObj.meals[slot.key]) || [];
+        const items = itemsArr.length
+          ? itemsArr.map((it,idx)=>`<li>${escapeHtml(it)} ${isAdmin ? `<button class="delete small" onclick="deleteWeeklyMenuItem(${week.week},'${dayObj.day}','${slot.key}',${idx})">Padam</button>`:''}</li>`).join('')
+          : '<li>-</li>';
+        return `<div><strong>${slot.label}</strong><ul>${items}</ul></div>`;
+      }).join('');
+      return `<div class="week-day"><h4>${escapeHtml(dayObj.day)}</h4><div class="meal-columns">${blocks}</div></div>`;
+    }).join('');
+    return `<details class="week-card"><summary>Minggu ${week.week}</summary><div class="week-days">${daysHtml}</div></details>`;
+  }).join('');
+}
+
+function addWeeklyMenuItem(){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  const weekNum = parseInt(safeGet('weeklyMenuWeek')?.value || '1', 10);
+  const day = safeGet('weeklyMenuDay')?.value || 'Ahad';
+  const slot = safeGet('weeklyMenuSlot')?.value || 'Sarapan';
+  const name = (safeGet('weeklyMenuItemName')?.value || '').trim();
+  const msg = safeGet('weeklyMenuMsg');
+  if(msg) msg.innerText = '';
+  if(!name){ if(msg) msg.innerText = 'Sila isi menu.'; return; }
+
+  const data = getWeeklyMenuData();
+  const weekObj = data.find(w=>w.week === weekNum) || {week: weekNum, days: []};
+  if(!data.find(w=>w.week === weekNum)) data.push(weekObj);
+  let dayObj = (weekObj.days || []).find(d=>d.day === day);
+  if(!dayObj){
+    dayObj = {day, meals:{Sarapan:[],Tengahari:[],Petang:[],Malam:[],MinumMalam:[]}};
+    weekObj.days = weekObj.days || [];
+    weekObj.days.push(dayObj);
+  }
+  if(!dayObj.meals) dayObj.meals = {Sarapan:[],Tengahari:[],Petang:[],Malam:[],MinumMalam:[]};
+  if(!dayObj.meals[slot]) dayObj.meals[slot] = [];
+  dayObj.meals[slot].push(name);
+
+  saveWeeklyMenuData(data);
+  if(msg) msg.innerText = 'Menu ditambah.';
+  resetWeeklyMenuForm();
+  renderWeeklyMenu();
+  renderWeeklyMenuAdminList();
+}
+
+function deleteWeeklyMenuItem(weekNum, day, slot, idx){
+  if(!isAdmin){ alert('Hanya admin.'); return; }
+  const data = getWeeklyMenuData();
+  const weekObj = data.find(w=>w.week === weekNum);
+  const dayObj = weekObj?.days?.find(d=>d.day === day);
+  const arr = dayObj?.meals?.[slot];
+  if(arr && arr[idx] !== undefined){
+    arr.splice(idx,1);
+    saveWeeklyMenuData(data);
+    renderWeeklyMenu();
+    renderWeeklyMenuAdminList();
+  }
+}
+
+function resetWeeklyMenuForm(){
+  const setVal = (id,val)=>{ const el = safeGet(id); if(el) el.value = val; };
+  setVal('weeklyMenuWeek','1');
+  setVal('weeklyMenuDay','Ahad');
+  setVal('weeklyMenuSlot','Sarapan');
+  setVal('weeklyMenuItemName','');
+}
+
+/* -------------------------
+   Rating analytics (pie, bar, average)
+   ------------------------- */
+let pieChart = null; let barChart = null;
+function computeRatingStats(){
+  const counts = {1:0,2:0,3:0,4:0,5:0}; let sum=0; let n=0;
+  aduanList.forEach(a=>{ const r = parseInt(a.rating); if(!isNaN(r) && r>=1&&r<=5){ counts[r]++; sum+=r; n++; }});
+  const avg = n? (sum/n):0; return {counts, avg, total:n};
+}
+
+function renderRatingAnalytics(){
+  try{
+    const stats = computeRatingStats();
+    const avgEl = safeGet('avgRating');
+    if(avgEl) avgEl.innerText = stats.total ? (Math.round((stats.avg+Number.EPSILON)*100)/100).toFixed(2) : '-';
+    const headerAvg = safeGet('headerAvg'); if(headerAvg) headerAvg.innerText = stats.total ? avgEl.innerText : '-';
+    const headerTotal = safeGet('headerTotal'); if(headerTotal) headerTotal.innerText = stats.total || 0;
+    const headerRole = safeGet('headerRole'); if(headerRole) headerRole.innerText = isAdmin ? (adminRole || 'Admin') : '-';
+    const avgBar = safeGet('avgBarFill'); if(avgBar) avgBar.style.width = stats.total ? Math.min(100, Math.max(0, (stats.avg/5)*100)) + '%' : '0%';
+    const dataCounts = [stats.counts[1],stats.counts[2],stats.counts[3],stats.counts[4],stats.counts[5]];
+
+    // Pie
+    const pieEl = safeGet('ratingPie');
+    if(pieEl && typeof Chart !== 'undefined'){
+      const pieCtx = pieEl.getContext('2d');
+      if(pieChart){ try{ pieChart.destroy(); }catch(e){} }
+      pieChart = new Chart(pieCtx, {
+        type:'pie',
+        data:{ labels:['1 - Sangat Tidak Memuaskan','2 - Tidak Memuaskan','3 - Memuaskan','4 - Sangat Memuaskan','5 - Cemerlang'],
+               datasets:[{ data:dataCounts, backgroundColor:['#d14343','#f5a524','#ffd45c','#2d9d78','#0f66d0'] }] },
+        options:{ responsive:true, maintainAspectRatio:false }
+      });
+    }
+
+    // Bar
+    const barEl = safeGet('ratingBar');
+    if(barEl && typeof Chart !== 'undefined'){
+      const barCtx = barEl.getContext('2d');
+      if(barChart){ try{ barChart.destroy(); }catch(e){} }
+      barChart = new Chart(barCtx, {
+        type:'pie',
+        data:{ labels:['1','2','3','4','5'], datasets:[{ label:'Bilangan Aduan', data:dataCounts, backgroundColor:['#d14343','#f5a524','#ffd45c','#2d9d78','#0f66d0'] }] },
+        options:{ responsive:true, maintainAspectRatio:false }
+      });
+    }
+  }catch(err){
+    console.warn('renderRatingAnalytics error', err);
+  }
+}
+
+/* -------------------------
+   Initialize UI on load
+   ------------------------- */
+function init(){
+  initMenuStore();
+  initWeeklyMenuStore();
+  renderCustomStudentList();
+  setDefaultFirstTimePass();
+  applyStudentSession();
+  renderComplaints();
+  renderAdminList();
+  renderMenu();
+  renderWeeklyMenu();
+  renderWeeklyMenuAdminList();
+  renderRatingAnalytics();
+  setRoleUI(getSelectedRole());
+  renderStatusCounts();
+  wireAdminFilters();
+  wireFirstTimeAdminSearch();
+  wireStudentFilters();
+  const ratingEl = safeGet('rating');
+  if(ratingEl){
+    ratingEl.addEventListener('input', updateRatingDesc);
+    updateRatingDesc();
+  }
+  autoRedirectIfLogged(); // auto-redirect if student/admin already logged
+}
+
+// run init when DOM ready
+if(document.readyState === 'complete' || document.readyState === 'interactive'){
+  setTimeout(init, 10);
+} else {
+  document.addEventListener('DOMContentLoaded', init);
+}
+/* -------------------------
+   Penapis pelajar
+   ------------------------- */
+function getStudentFilteredAduan(){
+  const term = (safeGet('studentSearch')?.value || '').toLowerCase().trim();
+  const statusVal = safeGet('studentStatusFilter')?.value || 'ALL';
+  const ratingVal = safeGet('studentRatingFilter')?.value || 'ALL';
+  const sortVal = safeGet('studentSort')?.value || 'latest';
+  const mealVal = safeGet('studentMealFilter')?.value || 'ALL';
+  const mineOnly = !!safeGet('studentMineOnly')?.checked;
+  const session = JSON.parse(SS.getItem('student_logged') || 'null');
+
+  let list = [...aduanList];
+  if(term){
+    list = list.filter(c=>{
+      const blob = `${c.name||''} ${c.dorm||''} ${c.message||''} ${c.meal_type||''}`.toLowerCase();
+      return blob.includes(term);
+    });
+  }
+  if(statusVal !== 'ALL'){
+    list = list.filter(c=>c.status === statusVal);
+  }
+  if(ratingVal !== 'ALL'){
+    list = list.filter(c=>{
+      const r = parseInt(c.rating)||0;
+      if(ratingVal === '4plus') return r>=4;
+      if(ratingVal === 'low') return r<=2;
+      if(ratingVal === 'exact5') return r===5;
+      return true;
+    });
+  }
+  if(mealVal !== 'ALL'){
+    list = list.filter(c=>c.meal_type === mealVal);
+  }
+  if(mineOnly && session?.ic){
+    list = list.filter(c=>c.ic === session.ic);
+  }
+
+  list.sort((a,b)=>{
+    const ta = a.ts || Date.parse(a.date) || 0;
+    const tb = b.ts || Date.parse(b.date) || 0;
+    if(sortVal === 'latest') return tb - ta;
+    if(sortVal === 'oldest') return ta - tb;
+    if(sortVal === 'high') return (b.rating||0) - (a.rating||0);
+    if(sortVal === 'low') return (a.rating||0) - (b.rating||0);
+    return 0;
+  });
+
+  return list;
+}
+
+function renderStudentStats(list){
+  const data = list || [];
+  const setVal = (id,val)=>{ const el = safeGet(id); if(el) el.innerText = val; };
+  const counts = {Baru:0, DalamProses:0, Selesai:0};
+  data.forEach(c=>{ if(counts[c.status] !== undefined) counts[c.status]++; });
+  setVal('studentTotal', data.length);
+  setVal('studentCountBaru', counts.Baru);
+  setVal('studentCountProses', counts.DalamProses);
+  setVal('studentCountSelesai', counts.Selesai);
+}
+
+function resetStudentFilters(){
+  const setVal = (id,val)=>{ const el = safeGet(id); if(el) el.value = val; };
+  setVal('studentSearch',''); setVal('studentStatusFilter','ALL'); setVal('studentRatingFilter','ALL'); setVal('studentMealFilter','ALL'); setVal('studentSort','latest');
+  const mine = safeGet('studentMineOnly'); if(mine) mine.checked = false;
+  renderComplaints();
+}
+
+function wireStudentFilters(){
+  ['studentSearch','studentStatusFilter','studentRatingFilter','studentMealFilter','studentSort','studentMineOnly'].forEach(id=>{
+    const el = safeGet(id);
+    if(el){
+      const evt = id === 'studentSearch' ? 'input' : 'change';
+      el.addEventListener(evt, ()=>renderComplaints());
+    }
+  });
+}
+
+function updateRatingDesc(){
+  const ratingEl = safeGet('rating');
+  const descEl = safeGet('ratingDesc');
+  if(!ratingEl || !descEl) return;
+  descEl.innerText = ratingDescription(ratingEl.value);
+}
+
+function ratingDescription(val){
+  const map = {
+    1: 'Sangat Tidak Memuaskan: Makanan tidak sedap, perkhidmatan lambat, dan kebersihan sangat teruk.',
+    2: 'Tidak Memuaskan: Makanan kurang sedap, perkhidmatan agak lambat, kebersihan perlu diperbaiki.',
+    3: 'Memuaskan: Makanan sedap, perkhidmatan memadai, kebersihan ok tetapi boleh diperbaiki.',
+    4: 'Sangat Memuaskan: Makanan sangat sedap, perkhidmatan cekap dan mesra, kebersihan terjaga dengan baik.',
+    5: 'Cemerlang: Makanan luar biasa, perkhidmatan sangat cepat dan profesional, dewan makan sentiasa bersih dan teratur.'
+  };
+  const num = parseInt(val, 10);
+  return map[num] || '';
+}
+
+function formatRatingWithDesc(val){
+  const num = parseInt(val, 10);
+  if(!num) return '-';
+  const desc = ratingDescription(num);
+  return desc ? `${num} - ${desc}` : String(num);
+}
+
+function copyIC(){
+  const ic = safeGet('ic_display')?.value || '';
+  if(!ic) return;
+  navigator.clipboard?.writeText(ic).catch(()=>{});
+  const hm = safeGet('statusMsg'); if(hm) hm.innerText = 'IC disalin.';
+}
+
+function exportMyCsv(){
+  const session = JSON.parse(SS.getItem('student_logged') || 'null');
+  if(!session?.ic){ alert('Login sebagai pelajar dahulu.'); return; }
+  const mine = aduanList.filter(a=>a.ic === session.ic);
+  if(!mine.length){ alert('Tiada aduan anda.'); return; }
+  const header = ['Nama','IC','Dorm','Waktu','Rating','Status','Tarikh','Aduan'];
+  const rows = mine.map(c=>[
+    (c.name||'').replace(/"/g,'""'),
+    (c.ic||'').replace(/"/g,'""'),
+    (c.dorm||'').replace(/"/g,'""'),
+    (c.meal_type||'').replace(/"/g,'""'),
+    c.rating||'',
+    c.status||'',
+    c.date||'',
+    (c.message||'').replace(/"/g,'""')
+  ]);
+  const csv = [header, ...rows].map(r=>`"${r.join('","')}"`).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'aduan-saya.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
+
+
+
+
+
